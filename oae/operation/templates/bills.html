@@ -3,6 +3,8 @@
 {% load static %}
 
 {% block content_before %}{% endblock %}
+{% block nav-global-side %}{% endblock %}
+{% block object-tools %}{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -10,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* ===== RESET for custom area ===== */
+  /* reset */
   .pp-wrap, .pp-wrap * { box-sizing: border-box; margin: 0; padding: 0; }
   .pp-wrap ul, .pp-wrap li { list-style: none; }
   .pp-wrap a { text-decoration: none; color: inherit; }
@@ -20,13 +22,13 @@
     width: 100%;
   }
 
-  /* ===== 1. TITLE BAR (шапка сделки) ===== */
+  /* шапка */
   .pp-title-bar {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 20px;
+    padding: 4px 0;
     gap: 10px;
     height: 40px;
     align-self: stretch;
@@ -60,15 +62,13 @@
     cursor: pointer;
   }
   .pp-btn:hover { background: #F9FAFB; }
-  .pp-btn__icon { width: 20px; height: 20px; flex: none; }
+  .pp-btn:hover .pp-btn__icon svg path { stroke: #079669; }
+  .pp-btn:hover .pp-btn__label span { color: #079669; }
+  .pp-btn__icon { width: 20px; height: 20px; flex: none; display: flex; align-items: center; justify-content: center; }
   .pp-btn__icon svg { width: 16px; height: 16px; }
   .pp-btn__label {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    padding: 2px;
-    gap: 10px;
-    height: 21px;
   }
   .pp-btn__label span {
     font-family: 'Inter', sans-serif;
@@ -80,12 +80,12 @@
     white-space: nowrap;
   }
 
-  /* ===== 2. STATS SECTION (курсы + метрики + счета) ===== */
+  /* курсы + метрики + счета */
   .pp-stats {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    padding: 13px 20px 0px;
+    padding: 13px 0 0;
     gap: 16px;
     align-self: stretch;
   }
@@ -105,7 +105,7 @@
     align-self: stretch;
   }
 
-  /* -- Courses panel -- */
+  /* курсы */
   .pp-courses {
     display: flex;
     flex-direction: column;
@@ -221,7 +221,7 @@
   .pp-courses__badge--up .pp-courses__badge-text { color: #079669; }
   .pp-courses__badge--down .pp-courses__badge-text { color: #FF5E5E; }
 
-  /* -- Metrics grid -- */
+  /* метрики */
   .pp-metrics {
     position: relative;
     width: 100%;
@@ -242,7 +242,7 @@
     border: 1px solid #DEE2EA;
     border-radius: 12px;
   }
-  /* Two columns: left = 0, right = calc(50% + 4px); each width = calc(50% - 4px) */
+  /* сетка метрик: 2 колонки */
   .pp-metrics__card--c0 { left: 0; width: calc(50% - 4px); }
   .pp-metrics__card--c1 { left: calc(50% + 4px); width: calc(50% - 4px); }
   .pp-metrics__card--r0 { top: 0; }
@@ -273,14 +273,14 @@
     flex: none;
   }
 
-  /* -- Accounts panel (right column) -- */
+  /* счета */
   .pp-accounts {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     padding: 0px 0px 8px;
-    gap: 2px;
+    gap: 0;
     width: 550px;
     height: 374px;
     border: 1px solid #DEE2EA;
@@ -296,6 +296,7 @@
     height: 27px;
     background: #F8F8F8;
     align-self: stretch;
+    flex: none;
   }
   .pp-accounts__header-row {
     display: flex;
@@ -331,10 +332,11 @@
     align-items: center;
     padding: 8px 12px;
     gap: 4px;
+    min-height: 33.89px;
     height: 33.89px;
     border-radius: 20px;
     align-self: stretch;
-    flex: 1 0 auto;
+    flex: none;
   }
   .pp-accounts__row a {
     display: flex;
@@ -354,19 +356,15 @@
   .pp-accounts__name-wrap {
     display: flex;
     flex-direction: row;
-    justify-content: center;
     align-items: center;
     gap: 6px;
   }
   .pp-accounts__flag {
     width: 20px;
     height: 20px;
-    font-family: 'Inter', sans-serif;
-    font-style: normal;
-    font-weight: 500;
     font-size: 20px;
-    line-height: 24px;
-    color: #5E6773;
+    line-height: 20px;
+    text-align: center;
     flex: none;
   }
   .pp-accounts__name {
@@ -394,6 +392,12 @@
     white-space: nowrap;
   }
   .pp-accounts__rate {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    width: 54px;
+    height: 15px;
     font-family: 'Inter', sans-serif;
     font-style: normal;
     font-weight: 500;
@@ -401,14 +405,13 @@
     line-height: 15px;
     color: #079669;
     white-space: nowrap;
-    width: 54px;
     text-align: right;
   }
 
-  /* ===== 3. CAROUSEL (карусель контрагентов) ===== */
+  /* карусель контрагентов */
   .pp-carousel-wrap {
     position: relative;
-    padding: 16px 20px 0px 20px;
+    padding: 16px 0 0;
     overflow: hidden;
   }
   .pp-carousel {
@@ -516,39 +519,356 @@
     color: #101827;
   }
 
-  /* Fade gradient */
-  .pp-carousel-fade {
+  /* градиенты и стрелки */
+  .pp-carousel-fade-right {
     position: absolute;
-    right: 0px;
-    top: 0px;
+    right: 0;
+    top: 0;
     width: 173px;
     height: 100%;
     background: linear-gradient(270deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
     pointer-events: none;
     z-index: 2;
+    transition: opacity 0.25s;
   }
-  /* Caret arrow */
+  .pp-carousel-fade-left {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 173px;
+    height: 100%;
+    background: linear-gradient(90deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.25s;
+    opacity: 0;
+  }
   .pp-carousel-arrow {
     position: absolute;
     top: calc(50% - 16px);
-    right: -8px;
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    background: #FFFFFF;
-    border: 1px solid #DEE2EA;
+    background: none;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     z-index: 3;
     pointer-events: all;
+    transition: opacity 0.25s;
+    padding: 0;
   }
-  .pp-carousel-arrow:hover { background: #F9FAFB; }
-  .pp-carousel-arrow svg {
-    width: 16px;
-    height: 16px;
+  .pp-carousel-arrow:hover { opacity: 0.7; }
+  .pp-carousel-arrow--right { right: 12px; }
+  .pp-carousel-arrow--left { left: 12px; opacity: 0; pointer-events: none; }
+  .pp-carousel-arrow--left svg { transform: rotate(180deg); }
+
+  /* ================================================
+     Таблица сделок — переопределяем unfold
+     ================================================ */
+
+  /* #changelist — оставляем нативный -mx-4, только верхний отступ */
+  #changelist {
+    font-family: 'Inter', sans-serif;
+    padding-top: 16px !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* .result-list-wrapper — оставляем нативный px-4, убираем gap */
+  #changelist > .result-list-wrapper {
+    gap: 0 !important;
+  }
+
+  /* внутренний div (.grow.min-w-0) — основная колонка */
+  #changelist > .result-list-wrapper > div:first-child {
+    min-width: 0;
+  }
+
+  /* search bar — div с lg:border lg:rounded-t-default
+     Делаем из него верхнюю часть карточки */
+  #changelist > .result-list-wrapper > div:first-child > div.flex.flex-col {
+    border: 1px solid #E5E7EB !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    background: #FFFFFF !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+    height: 56px;
+    gap: 8px;
+    overflow: visible !important;
+  }
+
+  /* форма */
+  #changelist-form {
+    border: none !important;
+    border-radius: 0 !important;
+    background: #FFFFFF;
+  }
+
+  /* simplebar-обёртка внутри формы — нижняя часть карточки */
+  #changelist-form > div[data-simplebar] {
+    border: 1px solid #E5E7EB !important;
+    border-top: none !important;
+    border-radius: 0 0 12px 12px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    overflow-x: auto !important;
+  }
+
+  /* убираем дефолтные тени и рамки unfold (но не наши!) */
+  .result-list-wrapper .shadow-xs {
+    box-shadow: none !important;
+  }
+
+  /* поиск */
+  #changelist-search {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0 16px;
+    width: auto;
+  }
+  #changelist-search > div {
+    width: 340px;
+    height: 32px;
+    border: 1px solid #E8E9EC !important;
+    border-radius: 9999px !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+    padding: 0 12px !important;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  #changelist-search > div:focus-within {
+    outline: 2px solid #079669 !important;
+    outline-offset: -2px;
+  }
+  #searchbar {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 17px;
+    color: #101827;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    height: 100%;
+    flex: 1;
+  }
+  #searchbar::placeholder {
+    color: #B7BBC4;
+    font-weight: 500;
+  }
+  #searchbar-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    order: -1;
+  }
+  #searchbar-submit .material-symbols-outlined {
+    font-size: 20px;
+    color: #4B5563;
+  }
+
+  /* кнопка фильтров */
+  #content-main > div > div > div > div > a {
+    display: inline-flex !important;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    height: 32px;
+    border: 1px solid #E8E9EC;
+    border-radius: 9999px;
+    background: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4B5563;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    margin-right: 16px;
+  }
+  #content-main > div > div > div > div > a:hover {
+    background: #F9FAFB;
+    color: #079669;
+  }
+  #content-main > div > div > div > div > a:hover .material-symbols-outlined {
+    color: #079669;
+  }
+
+  /* таблица */
+  #result_list {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: none !important;
+  }
+
+  /* шапка таблицы */
+  #result_list > thead {
+    display: table-header-group !important;
+    background: #F9FAFB;
+  }
+  #result_list > thead > tr {
+    height: 40px;
+  }
+  #result_list > thead > tr > th {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    padding: 0 16px;
+    height: 40px;
+    vertical-align: middle;
+    text-align: left;
+    border: none !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    background: #F9FAFB;
+    white-space: nowrap;
+  }
+  #result_list > thead > tr > th div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #result_list > thead > tr > th a {
+    color: #101827 !important;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  /* иконки сортировки — серые, ховер: стрелка зелёная, крестик красный */
+  #result_list > thead > tr > th .text-base-400 {
+    font-size: 14px;
+    color: #B7BBC4 !important;
+    transition: color 0.15s;
+  }
+  #result_list > thead > tr > th a:hover .text-base-400 {
+    color: #079669 !important;
+  }
+  /* кнопка отмены сортировки (крестик) */
+  #result_list > thead > tr > th > div > a[href="?"] .material-symbols-outlined,
+  #result_list > thead > tr > th > div > a.cancel-sort .material-symbols-outlined {
+    color: #B7BBC4 !important;
+    transition: color 0.15s;
+  }
+  #result_list > thead > tr > th > div > a[href="?"]:hover .material-symbols-outlined,
+  #result_list > thead > tr > th > div > a.cancel-sort:hover .material-symbols-outlined {
+    color: #FF5E5E !important;
+  }
+
+  /* чекбокс в шапке */
+  #result_list > thead > tr > th:first-child {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    text-align: center;
+    padding: 0 0 0 12px;
+  }
+
+  /* минимальные ширины колонок (не фиксированные — тянутся!) */
+  #result_list > thead > tr > th:nth-child(2) { min-width: 98px; }   /* ID */
+  #result_list > thead > tr > th:nth-child(3) { min-width: 91px; }   /* Дата */
+  #result_list > thead > tr > th:nth-child(4) { min-width: 182px; }  /* Счет прихода/сумма */
+  #result_list > thead > tr > th:nth-child(5) { min-width: 182px; }  /* Счет расхода/сумма */
+  #result_list > thead > tr > th:nth-child(6) { min-width: 77px; }   /* Доход */
+  #result_list > thead > tr > th:nth-child(7) { min-width: 93px; }   /* Процент */
+  #result_list > thead > tr > th:nth-child(8) { min-width: 88px; }   /* Курс до */
+  #result_list > thead > tr > th:nth-child(9) { min-width: 112px; }  /* Курс после */
+  #result_list > thead > tr > th:nth-child(10) { min-width: 80px; }  /* Долг */
+  #result_list > thead > tr > th:nth-child(11) { min-width: 112px; } /* Контрагент */
+  #result_list > thead > tr > th:nth-child(12) { min-width: 129px; } /* Комментарий */
+
+  /* строки данных */
+  #result_list > tbody {
+    display: table-row-group;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+  #result_list > tbody > tr {
+    height: 40px;
+    border: none !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    margin: 0 !important;
+    display: table-row !important;
+    border-radius: 0 !important;
+  }
+  #result_list > tbody:last-child > tr {
+    border-bottom: none !important;
+  }
+  #result_list > tbody > tr > th,
+  #result_list > tbody > tr > td {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    padding: 0 16px;
+    height: 40px;
+    vertical-align: middle;
+    text-align: left;
+    border: none !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: table-cell !important;
+  }
+  #result_list > tbody > tr > th a,
+  #result_list > tbody > tr > td a {
+    color: #101827 !important;
+    text-decoration: none;
+  }
+
+  /* чекбокс в строках */
+  #result_list > tbody > tr > td:first-child,
+  #result_list > tbody > tr > th:first-child {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    text-align: center;
+    padding: 0 0 0 12px;
+  }
+
+  /* uppercase для столбцов счетов */
+  #result_list > tbody > tr > td[data-label="Счет прихода"],
+  #result_list > tbody > tr > td[data-label="Счет расхода"],
+  #result_list > tbody > tr > th[data-label="Счет прихода"],
+  #result_list > tbody > tr > th[data-label="Счет расхода"] {
+    text-transform: uppercase;
+  }
+
+  /* убираем unfold-мобильные before-лейблы */
+  #result_list > tbody > tr > th::before,
+  #result_list > tbody > tr > td::before {
+    display: none !important;
+  }
+
+  /* пагинация */
+  #changelist .paginator,
+  #content > div > ul {
+    padding: 12px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
   }
 </style>
 {% endblock %}
@@ -557,26 +877,26 @@
 
 <div class="pp-wrap">
 
-  {# ===== 1. TITLE BAR ===== #}
+  {# шапка #}
   <div class="pp-title-bar">
     <span class="pp-title-bar__text">Сделки</span>
     <div class="pp-title-bar__actions">
       <button class="pp-btn" onclick="location.href='?recount=1'" type="button">
         <span class="pp-btn__icon">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.5 7.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" stroke="#4B5563" stroke-width="2"/>
-            <path d="M10 10v6.667" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
-            <path d="M10 13.333h2.5" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 13.3333V10H10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.83333 13.3333C7.67428 13.3333 9.16667 11.841 9.16667 10C9.16667 8.15906 7.67428 6.66667 5.83333 6.66667C3.99238 6.66667 2.5 8.15906 2.5 10C2.5 11.841 3.99238 13.3333 5.83333 13.3333Z" stroke="#4B5563" stroke-width="2"/>
+            <path d="M14.1667 12.5V10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </span>
         <div class="pp-btn__label"><span>Пересчитать</span></div>
       </button>
       <button class="pp-btn" onclick="location.href='?recount500=1'" type="button">
         <span class="pp-btn__icon">
-          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.5 7.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" stroke="#4B5563" stroke-width="2"/>
-            <path d="M10 10v6.667" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
-            <path d="M10 13.333h2.5" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 13.3333V10H10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.83333 13.3333C7.67428 13.3333 9.16667 11.841 9.16667 10C9.16667 8.15906 7.67428 6.66667 5.83333 6.66667C3.99238 6.66667 2.5 8.15906 2.5 10C2.5 11.841 3.99238 13.3333 5.83333 13.3333Z" stroke="#4B5563" stroke-width="2"/>
+            <path d="M14.1667 12.5V10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </span>
         <div class="pp-btn__label"><span>Пересчитать 500</span></div>
@@ -586,13 +906,13 @@
 
   {% if not blocked %}
 
-  {# ===== 2. STATS SECTION ===== #}
+  {# курсы + метрики + счета #}
   <div class="pp-stats">
 
-    {# LEFT COLUMN #}
+    {# левая колонка #}
     <div class="pp-stats__left">
 
-      {# Courses panel #}
+      {# курсы #}
       <div class="pp-courses">
         <div class="pp-courses__header">
           <div class="pp-courses__header-row">
@@ -609,14 +929,13 @@
               <div class="pp-courses__vals">
                 <span class="pp-courses__rate">{{ c.value|floatformat:3 }}</span>
                 {% if c.variation %}
-                  {% with var=c.variation|stringformat:"s" %}
-                    {% if "-" in var %}
+                    {% if c.direction == 'down' %}
                       <div class="pp-courses__badge pp-courses__badge--down">
                         <svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none">
                           <path d="M8 3.5V12.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M12 8.5L8 12.5L4 8.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <span class="pp-courses__badge-text">{{ c.variation }}</span>
+                        <span class="pp-courses__badge-text">{{ c.variation|floatformat:1 }}%</span>
                       </div>
                     {% else %}
                       <div class="pp-courses__badge pp-courses__badge--up">
@@ -624,10 +943,9 @@
                           <path d="M8 12.5V3.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                           <path d="M4 7.5L8 3.5L12 7.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <span class="pp-courses__badge-text">{{ c.variation }}</span>
+                        <span class="pp-courses__badge-text">{{ c.variation|floatformat:1 }}%</span>
                       </div>
                     {% endif %}
-                  {% endwith %}
                 {% endif %}
               </div>
             </div>
@@ -639,7 +957,7 @@
         </div>
       </div>
 
-      {# Metrics grid #}
+      {# метрики #}
       <div class="pp-metrics">
         <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r0">
           <span class="pp-metrics__card-label">Общий долг</span>
@@ -687,7 +1005,7 @@
 
     </div>
 
-    {# RIGHT COLUMN — Accounts #}
+    {# правая колонка — счета #}
     <div class="pp-stats__right">
       <div class="pp-accounts">
         <div class="pp-accounts__header">
@@ -732,8 +1050,9 @@
 
   </div>
 
-  {# ===== 3. CAROUSEL ===== #}
+  {# карусель #}
   <div class="pp-carousel-wrap">
+    <div class="pp-carousel-fade-left" id="ppFadeLeft"></div>
     <div class="pp-carousel" id="ppCarousel">
       {% for duty in dutys %}
       <div class="pp-carousel__card">
@@ -766,17 +1085,48 @@
       </div>
       {% endfor %}
     </div>
-    <div class="pp-carousel-fade"></div>
-    <div class="pp-carousel-arrow" onclick="document.getElementById('ppCarousel').scrollBy({left:220,behavior:'smooth'})">
-      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6.5 4.8L9.7 8L6.5 11.2" fill="#101827"/>
+    <div class="pp-carousel-fade-right" id="ppFadeRight"></div>
+    <div class="pp-carousel-arrow pp-carousel-arrow--left" id="ppArrowLeft">
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.2929 9.95958C13.6834 9.56906 14.3166 9.56906 14.7071 9.95958L20.0404 15.2929C20.431 15.6834 20.431 16.3166 20.0404 16.7071L14.7071 22.0405C14.3166 22.431 13.6834 22.431 13.2929 22.0405C12.9024 21.6499 12.9024 21.0168 13.2929 20.6262L17.9191 16L13.2929 11.3738C12.9024 10.9833 12.9024 10.3501 13.2929 9.95958Z" fill="#101827"/>
+      </svg>
+    </div>
+    <div class="pp-carousel-arrow pp-carousel-arrow--right" id="ppArrowRight">
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.2929 9.95958C13.6834 9.56906 14.3166 9.56906 14.7071 9.95958L20.0404 15.2929C20.431 15.6834 20.431 16.3166 20.0404 16.7071L14.7071 22.0405C14.3166 22.431 13.6834 22.431 13.2929 22.0405C12.9024 21.6499 12.9024 21.0168 13.2929 20.6262L17.9191 16L13.2929 11.3738C12.9024 10.9833 12.9024 10.3501 13.2929 9.95958Z" fill="#101827"/>
       </svg>
     </div>
   </div>
+  <script>
+  (function(){
+    var c = document.getElementById('ppCarousel');
+    var aL = document.getElementById('ppArrowLeft');
+    var aR = document.getElementById('ppArrowRight');
+    var fL = document.getElementById('ppFadeLeft');
+    var fR = document.getElementById('ppFadeRight');
+    function update(){
+      var sl = c.scrollLeft, sw = c.scrollWidth, cw = c.clientWidth;
+      var canLeft = sl > 2;
+      var canRight = sl + cw < sw - 2;
+      aL.style.opacity = canLeft ? '1' : '0';
+      aL.style.pointerEvents = canLeft ? 'all' : 'none';
+      fL.style.opacity = canLeft ? '1' : '0';
+      aR.style.opacity = canRight ? '1' : '0';
+      aR.style.pointerEvents = canRight ? 'all' : 'none';
+      fR.style.opacity = canRight ? '1' : '0';
+    }
+    aR.addEventListener('click', function(){ c.scrollBy({left: 220, behavior: 'smooth'}); });
+    aL.addEventListener('click', function(){ c.scrollBy({left: -220, behavior: 'smooth'}); });
+    c.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    window.addEventListener('load', update);
+    requestAnimationFrame(function(){ requestAnimationFrame(update); });
+  })();
+  </script>
 
   {% else %}
 
-  {# ===== BLOCKED VIEW ===== #}
+  {# заблокированный вид #}
   <div class="pp-stats">
     <div class="pp-stats__left">
       <div class="pp-courses">
@@ -847,6 +1197,7 @@
   </div>
 
   <div class="pp-carousel-wrap">
+    <div class="pp-carousel-fade-left" id="ppFadeLeftB"></div>
     <div class="pp-carousel" id="ppCarouselBlocked">
       {% for duty in dutys %}
       <div class="pp-carousel__card">
@@ -875,13 +1226,44 @@
       </div>
       {% endfor %}
     </div>
-    <div class="pp-carousel-fade"></div>
-    <div class="pp-carousel-arrow" onclick="document.getElementById('ppCarouselBlocked').scrollBy({left:220,behavior:'smooth'})">
-      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6.5 4.8L9.7 8L6.5 11.2" fill="#101827"/>
+    <div class="pp-carousel-fade-right" id="ppFadeRightB"></div>
+    <div class="pp-carousel-arrow pp-carousel-arrow--left" id="ppArrowLeftB">
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.2929 9.95958C13.6834 9.56906 14.3166 9.56906 14.7071 9.95958L20.0404 15.2929C20.431 15.6834 20.431 16.3166 20.0404 16.7071L14.7071 22.0405C14.3166 22.431 13.6834 22.431 13.2929 22.0405C12.9024 21.6499 12.9024 21.0168 13.2929 20.6262L17.9191 16L13.2929 11.3738C12.9024 10.9833 12.9024 10.3501 13.2929 9.95958Z" fill="#101827"/>
+      </svg>
+    </div>
+    <div class="pp-carousel-arrow pp-carousel-arrow--right" id="ppArrowRightB">
+      <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.2929 9.95958C13.6834 9.56906 14.3166 9.56906 14.7071 9.95958L20.0404 15.2929C20.431 15.6834 20.431 16.3166 20.0404 16.7071L14.7071 22.0405C14.3166 22.431 13.6834 22.431 13.2929 22.0405C12.9024 21.6499 12.9024 21.0168 13.2929 20.6262L17.9191 16L13.2929 11.3738C12.9024 10.9833 12.9024 10.3501 13.2929 9.95958Z" fill="#101827"/>
       </svg>
     </div>
   </div>
+  <script>
+  (function(){
+    var c = document.getElementById('ppCarouselBlocked');
+    var aL = document.getElementById('ppArrowLeftB');
+    var aR = document.getElementById('ppArrowRightB');
+    var fL = document.getElementById('ppFadeLeftB');
+    var fR = document.getElementById('ppFadeRightB');
+    function update(){
+      var sl = c.scrollLeft, sw = c.scrollWidth, cw = c.clientWidth;
+      var canLeft = sl > 2;
+      var canRight = sl + cw < sw - 2;
+      aL.style.opacity = canLeft ? '1' : '0';
+      aL.style.pointerEvents = canLeft ? 'all' : 'none';
+      fL.style.opacity = canLeft ? '1' : '0';
+      aR.style.opacity = canRight ? '1' : '0';
+      aR.style.pointerEvents = canRight ? 'all' : 'none';
+      fR.style.opacity = canRight ? '1' : '0';
+    }
+    aR.addEventListener('click', function(){ c.scrollBy({left: 220, behavior: 'smooth'}); });
+    aL.addEventListener('click', function(){ c.scrollBy({left: -220, behavior: 'smooth'}); });
+    c.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    window.addEventListener('load', update);
+    requestAnimationFrame(function(){ requestAnimationFrame(update); });
+  })();
+  </script>
 
   {% endif %}
 

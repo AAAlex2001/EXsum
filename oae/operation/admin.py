@@ -299,7 +299,8 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
     )
     inlines = [IncomeExpenseInline, ContractorDebtOperationInline,]
 
-    actions_list = ["calculate_rate", "calculate_rate_500"]
+    # actions_list disabled — custom buttons in bills.html template
+    # actions_list = ["calculate_rate", "calculate_rate_500"]
 
     actions_detail = ['history_detail', ]
     actions = ["make_is_closed", "clone_deal", "bulk_update_category_contractor", "export_xlsx"]
