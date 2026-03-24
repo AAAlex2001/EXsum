@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import site; print\\(''\\\\n''.join\\(site.getsitepackages\\(\\)\\)\\)\")",
+      "Bash(python -c \"import site; print\\(''\\\\n''.join\\(site.getsitepackages\\(\\)\\)\\)\")"
+    ]
+  }
+}
