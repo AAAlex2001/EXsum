@@ -291,46 +291,6 @@
     margin-top: 4px;
   }
 
-  /* Toggle (closed) */
-  .df-toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 36px;
-  }
-  .df-toggle-wrap > label {
-    font-weight: 500;
-    font-size: 12px;
-    color: #1E1E1E;
-    cursor: pointer;
-  }
-  .df-toggle {
-    position: relative;
-    width: 40px;
-    height: 22px;
-    flex-shrink: 0;
-  }
-  .df-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .df-toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #D7DBE4;
-    border-radius: 11px;
-    transition: background-color 0.2s;
-  }
-  .df-toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 18px; width: 18px;
-    left: 2px; bottom: 2px;
-    background-color: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-  .df-toggle input:checked + .df-toggle-slider { background-color: #079669; }
-  .df-toggle input:checked + .df-toggle-slider::before { transform: translateX(18px); }
-
   /* Tom-Select */
   html body .ts-wrapper .ts-control,
   #content-main .ts-wrapper .ts-control {
@@ -473,7 +433,12 @@
     display: none !important;
   }
 
-  /* Tfoot — скрываем через JS после извлечения ссылки */
+  /* Tfoot и нативные кнопки — скрываем */
+  #deal_data-group tfoot,
+  #debt_operations-group tfoot {
+    display: none !important;
+  }
+  .df-form-hidden { display: none !important; }
   /* JS-кнопка добавления */
   .df-add-btn {
     display: inline-flex !important;
@@ -739,8 +704,11 @@
     padding: 0 !important;
   }
   .df-bottom-3 > .form-row:has(.field-deal_1c) {
-    flex: 6 1 0 !important;
+    flex: 3 1 0 !important;
   }
+
+  /* Скрытие нативных кнопок/иконок */
+  .object-tools { display: none !important; }
 
   .submit-row {
     width: 100% !important;
@@ -760,8 +728,7 @@
   .dark .df-tab--active { color: #079669; background: #1F2937; }
   .dark .df-section-title { color: #6B7280; }
   .dark .df-section-line { border-color: #374151; }
-  .dark .df-datetime-field > label,
-  .dark .df-toggle-wrap > label { color: #E5E7EB !important; }
+  .dark .df-datetime-field > label { color: #E5E7EB !important; }
   .dark #content-main fieldset { background: #1F2937 !important; }
   .dark #content-main fieldset.df-contractor-mode { background: transparent !important; }
   .dark #content-main .field-line label,
@@ -791,7 +758,6 @@
     background: rgba(7,150,105,0.1) !important;
   }
   .dark .df-icon-btn svg path { stroke: #9CA3AF; }
-  .dark .df-toggle-slider { background-color: #374151; }
   .dark .ts-wrapper .ts-control {
     background: #111827 !important;
     border-color: #374151 !important;
@@ -1000,50 +966,9 @@
         }
       } catch(e) { console.error('[df] datetime:', e); }
 
-      /* Тоггл */
-      try {
-        var closedCheckbox = form.querySelector('input[name="closed"]');
-        console.log('[df] closed:', closedCheckbox ? closedCheckbox.type : 'NOT FOUND');
-        if (!closedCheckbox) {
-          var closedSelect = form.querySelector('select[name="closed"]');
-          console.log('[df] closedSelect:', !!closedSelect);
-        }
-        if (closedCheckbox && closedCheckbox.type === 'checkbox') {
-          var closedRow = closedCheckbox.closest('.form-row');
-          var closedFieldLine = closedCheckbox.closest('.field-line') || closedRow;
-          var closedLabel = closedRow ? closedRow.querySelector('label') : null;
-          var closedText = closedLabel ? closedLabel.textContent.trim() : '\u0417\u0430\u043A\u0440\u044B\u0442\u0430';
-          Array.from(closedFieldLine.children).forEach(function(ch) { ch.style.display = 'none'; });
-          if (closedLabel) closedLabel.style.display = 'none';
-          var toggleWrap = document.createElement('div');
-          toggleWrap.className = 'df-toggle-wrap';
-          var tLbl = document.createElement('label');
-          tLbl.textContent = closedText;
-          var tDiv = document.createElement('div');
-          tDiv.className = 'df-toggle';
-          closedCheckbox.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
-          closedCheckbox.style.display = '';
-          var slider = document.createElement('span');
-          slider.className = 'df-toggle-slider';
-          tDiv.appendChild(closedCheckbox);
-          tDiv.appendChild(slider);
-          toggleWrap.appendChild(tLbl);
-          toggleWrap.appendChild(tDiv);
-          function toggleCb(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closedCheckbox.checked = !closedCheckbox.checked;
-            closedCheckbox.dispatchEvent(new Event('change'));
-          }
-          tLbl.addEventListener('click', toggleCb);
-          slider.addEventListener('click', toggleCb);
-          tDiv.addEventListener('click', function(e) {
-            if (e.target === closedCheckbox) return;
-            toggleCb(e);
-          });
-          closedFieldLine.appendChild(toggleWrap);
-        }
-      } catch(e) { console.error('[df] toggle:', e); }
+      /* Тоггл — используем нативный Unfold тоггл (как у by_nikita) */
+      var closedCheckbox = form.querySelector('input[name="closed"]');
+      console.log('[df] closed:', closedCheckbox ? closedCheckbox.type : 'NOT FOUND');
 
       /* Инфо-бар контрагента */
       var infoBar = document.createElement('div');
@@ -1114,7 +1039,7 @@
           return;
         }
         var origParent = origLink.closest('tfoot') || origLink.closest('.add-row')?.parentElement || origLink.parentElement;
-        if (origParent && origParent !== group) origParent.style.display = 'none';
+        if (origParent && origParent !== group) origParent.style.setProperty('display', 'none', 'important');
         var btn = document.createElement('a');
         btn.href = '#';
         btn.className = 'df-add-btn';
@@ -1129,10 +1054,22 @@
       createAddButton(ieGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0442\u0440\u043E\u043A\u0443');
       createAddButton(debtGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435');
 
+      /* Скрытие ВСЕХ нативных кнопок "Добавить" внутри карточек */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         var h2 = g.querySelector('h2');
         if (h2) h2.style.display = 'none';
+        g.querySelectorAll('a').forEach(function(a) {
+          if (a.classList.contains('df-add-btn')) return;
+          if (/добавить|add another/i.test(a.textContent)) {
+            a.style.setProperty('display', 'none', 'important');
+            var p = a.parentElement;
+            if (p && p !== g) p.style.setProperty('display', 'none', 'important');
+          }
+        });
+        g.querySelectorAll('tfoot').forEach(function(tf) {
+          tf.style.setProperty('display', 'none', 'important');
+        });
       });
 
       /* Скрытие лишних форм (extra) — показываем только 1 */
@@ -1147,7 +1084,7 @@
         console.log('[df] tbodies in', g.id, ':', allBodies.length, 'visible:', visible.length);
         if (visible.length > 1) {
           for (var i = 1; i < visible.length; i++) {
-            visible[i].style.display = 'none';
+            visible[i].classList.add('df-form-hidden');
           }
         }
       });
