@@ -1,50 +1,1223 @@
 {% extends "admin/change_form.html" %}
-
 {% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  #content-main { font-family: 'Inter', sans-serif; }
+
+  #content-main fieldset .aligned {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Карточки счетов */
+  .df-bills {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 16px;
+  }
+  .df-bills::-webkit-scrollbar { display: none; }
+  .df-bill-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 14px;
+    gap: 2px;
+    min-width: 180px;
+    background: #F8F8F8;
+    border-radius: 14px;
+    flex: none;
+  }
+  .df-bill-card__name {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .df-bill-card__amount {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    white-space: nowrap;
+  }
+  .df-bill-card__rate {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #079669;
+    white-space: nowrap;
+  }
+
+  /* Вкладки */
+  .df-tabs {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    position: relative;
+    border-bottom: 1px solid #B7BBC4;
+    margin-bottom: 14px;
+  }
+  .df-tab {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 10px;
+    height: 41px;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #B7BBC4;
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+  .df-tab:hover { color: #5E6773; }
+  .df-tab--active { color: #079669; background: #FFFFFF; }
+  .df-tab--active::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -1px;
+    width: 100%; height: 3px;
+    background: #079669;
+    border-radius: 2px 2px 0 0;
+  }
+
+  /* Заголовок секции */
+  .df-section-hdr {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 0 3px;
+    margin-bottom: 4px;
+  }
+  .df-section-title {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    color: #AAAFB9;
+  }
+  .df-section-line {
+    width: 100%;
+    height: 0;
+    border-top: 1px solid #D7DBE4;
+  }
+
+  /* Основной филдсет */
+  #content-main fieldset {
+    background: #F8F8F8 !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 16px !important;
+    box-sizing: border-box !important;
+  }
+  #content-main fieldset > h2,
+  #content-main fieldset > legend { display: none !important; }
+
+  /* Грид филдсета */
+  #content-main fieldset .aligned {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 20px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  #content-main .form-row {
+    padding: 6px 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  #content-main .field-line {
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* Порядок полей */
+  .form-row:has(.field-date_create) { order: 1; }
+  .form-row:has(.field-closed)      { order: 2; display: flex; align-items: flex-end; justify-content: flex-end; }
+  .form-row:has(.field-category)    { order: 3; }
+  .form-row:has(.field-contractor)  { order: 4; }
+  .form-row:has(.field-cashflow)    { order: 5; }
+  .form-row:has(.field-comment)     { order: 6; }
+  .form-row:has(.field-rate)        { order: 7; }
+  .form-row:has(.field-by_nikita)   { order: 8; }
+  .form-row:has(.field-rate_contractors) { order: 9; }
+  .form-row:has(.field-duty_deal)   { order: 10; }
+  .form-row:has(.field-national_currency) { order: 10; }
+  .form-row:has(.field-deal_1c)     { order: 12; }
+
+  /* Labels */
+  #content-main .field-line label,
+  #content-main .field-line .flex label {
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: #1E1E1E !important;
+    margin-bottom: 4px !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  /* Inputs */
+  #content-main .field-line input[type="text"],
+  #content-main .field-line input[type="number"],
+  #content-main .field-line input[type="url"],
+  #content-main .field-line input[type="email"],
+  #content-main .field-line textarea,
+  #content-main .field-line select,
+  #content-main td input[type="text"],
+  #content-main td input[type="number"],
+  #content-main td select,
+  #content-main td textarea {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    line-height: 17px !important;
+    color: #1E1E1E !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D7DBE4 !important;
+    border-radius: 12px !important;
+    padding: 9px 12px !important;
+    height: 36px !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transition: border-color 0.15s !important;
+    box-sizing: border-box !important;
+  }
+  #content-main .field-line input:focus,
+  #content-main .field-line textarea:focus,
+  #content-main .field-line select:focus,
+  #content-main td input:focus,
+  #content-main td select:focus {
+    border-color: #079669 !important;
+    box-shadow: 0 0 0 1px #079669 !important;
+    outline: none !important;
+  }
+  #content-main input::placeholder,
+  #content-main textarea::placeholder {
+    color: #AAAFB9 !important;
+    font-weight: 500 !important;
+  }
+  #content-main .field-line textarea {
+    height: auto !important;
+    min-height: 36px !important;
+    resize: vertical;
+  }
+
+  /* Дата/Время */
+  .df-datetime-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .df-datetime-field {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .df-datetime-field > label {
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: #1E1E1E !important;
+    margin-bottom: 4px !important;
+  }
+  .df-datetime-input-wrap {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  .df-datetime-input-wrap input {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .df-icon-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D7DBE4 !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s, background 0.15s !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .df-icon-btn:hover {
+    border-color: #079669 !important;
+    background: #F0FDF9 !important;
+  }
+  .df-icon-btn svg { width: 16px; height: 16px; }
+  .df-datetime-warning {
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 14px;
+    color: #FF5E5E;
+    margin-top: 4px;
+  }
+
+  /* Toggle (closed) */
+  .df-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+  }
+  .df-toggle-wrap > label {
+    font-weight: 500;
+    font-size: 12px;
+    color: #1E1E1E;
+    cursor: pointer;
+  }
+  .df-toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .df-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .df-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #D7DBE4;
+    border-radius: 11px;
+    transition: background-color 0.2s;
+  }
+  .df-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px; width: 18px;
+    left: 2px; bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .df-toggle input:checked + .df-toggle-slider { background-color: #079669; }
+  .df-toggle input:checked + .df-toggle-slider::before { transform: translateX(18px); }
+
+  /* Tom-Select */
+  html body .ts-wrapper .ts-control,
+  #content-main .ts-wrapper .ts-control {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    color: #1E1E1E !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D7DBE4 !important;
+    border-radius: 12px !important;
+    padding: 9px 12px !important;
+    min-height: 36px !important;
+    box-shadow: none !important;
+  }
+  html body .ts-wrapper.focus .ts-control,
+  #content-main .ts-wrapper.focus .ts-control {
+    border-color: #079669 !important;
+    box-shadow: 0 0 0 1px #079669 !important;
+  }
+  html body .ts-dropdown {
+    border: 1px solid #D7DBE4 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+    overflow: hidden !important;
+    margin-top: 4px !important;
+    background: #FFFFFF !important;
+  }
+  html body .ts-dropdown .ts-dropdown-content {
+    border-radius: 12px !important;
+    padding: 4px !important;
+    overflow-y: auto !important;
+    max-height: 300px !important;
+  }
+  html body .ts-dropdown .option {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    color: #1E1E1E !important;
+    transition: background 0.1s !important;
+  }
+  html body .ts-dropdown .option:hover,
+  html body .ts-dropdown .option.active {
+    background: #F0FDF9 !important;
+    color: #079669 !important;
+  }
+  html body .ts-dropdown .option.selected {
+    background: #079669 !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Related widget wrapper */
+  #content-main .related-widget-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+  #content-main .related-widget-wrapper select,
+  #content-main .related-widget-wrapper .ts-wrapper {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+  #content-main .related-widget-wrapper > a { display: none !important; }
+
+  /* Inline groups */
+  #content-main .inline-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 0;
+  }
+  #content-main .inline-related {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  #content-main .inline-related fieldset {
+    background: #F8F8F8 !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    padding-bottom: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  #content-main .inline-related fieldset > h2 { display: none !important; }
+
+  /* Обход Alpine x-show */
+  #deal_data-group,
+  #debt_operations-group {
+    display: block !important;
+  }
+  #deal_data-group.df-hidden,
+  #debt_operations-group.df-hidden {
+    display: none !important;
+  }
+
+  /* Сброс unfold обёрток */
+  #deal_data-group .formset-wrapper,
+  #debt_operations-group .formset-wrapper,
+  #deal_data-group [data-simplebar],
+  #debt_operations-group [data-simplebar] {
+    border: none !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  #deal_data-group .simplebar-content-wrapper,
+  #deal_data-group .simplebar-wrapper,
+  #deal_data-group .simplebar-mask,
+  #debt_operations-group .simplebar-content-wrapper,
+  #debt_operations-group .simplebar-wrapper,
+  #debt_operations-group .simplebar-mask {
+    overflow: visible !important;
+  }
+  #deal_data-group table,
+  #deal_data-group tbody,
+  #deal_data-group tr,
+  #debt_operations-group table,
+  #debt_operations-group tbody,
+  #debt_operations-group tr {
+    border: none !important;
+    border-collapse: collapse !important;
+  }
+  #deal_data-group fieldset > div,
+  #debt_operations-group fieldset > div {
+    gap: 0 !important;
+  }
+
+  /* Скрытие empty-form и лишних template */
+  #deal_data-group tbody.empty-form,
+  #debt_operations-group tbody.empty-form {
+    display: none !important;
+  }
+  #deal_data-group tbody.original ~ tbody.template,
+  #debt_operations-group tbody.original ~ tbody.template {
+    display: none !important;
+  }
+
+  /* Tfoot — скрываем оригинал, кнопка через JS */
+  #deal_data-group tfoot,
+  #debt_operations-group tfoot {
+    display: none !important;
+  }
+  /* JS-кнопка добавления */
+  .df-add-btn {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 16px;
+    height: 32px;
+    width: 100%;
+    border: 1px solid #B7BBC4 !important;
+    border-radius: 9999px !important;
+    background: transparent !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    color: #101827 !important;
+    text-decoration: none !important;
+    transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .df-add-btn:hover {
+    border-color: #079669 !important;
+    background: #F0FDF9 !important;
+  }
+  .dark .df-add-btn {
+    border-color: #4B5563 !important;
+    color: #E5E7EB !important;
+  }
+  .dark .df-add-btn:hover {
+    border-color: #079669 !important;
+    background: rgba(7,150,105,0.1) !important;
+  }
+
+  /* ===== СУММЫ И СЧЕТА ===== */
+  #deal_data-group table {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    border: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+  #deal_data-group thead { display: none !important; }
+  #deal_data-group tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  #deal_data-group tbody:not(:has(.form-row)) { display: none !important; }
+
+  #deal_data-group .form-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px 20px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #deal_data-group .form-row > td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 6px 0 !important;
+    background: transparent !important;
+    border: none !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+  }
+  #deal_data-group .form-row > td::before {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: #1E1E1E !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    text-transform: none !important;
+    display: block !important;
+  }
+  #deal_data-group .form-row > td > div {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    flex-grow: 1 !important;
+  }
+  #deal_data-group .form-row > td > div > div {
+    width: 100% !important;
+  }
+
+  #deal_data-group td.delete,
+  #deal_data-group td.field-calculated,
+  #deal_data-group td.field-rate_calculated,
+  #deal_data-group td.field-transaction_id { display: none !important; }
+
+  #deal_data-group td.field-income_amount {
+    order: 1 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-income_amount::before { content: 'Сумма прихода' !important; }
+  #deal_data-group td.field-income_rate {
+    order: 2 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-income_rate::before { content: 'Курс прихода' !important; }
+  #deal_data-group td.field-income_account {
+    order: 3 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-income_account::before { content: 'Счет прихода' !important; }
+
+  #deal_data-group td.field-expense_amount {
+    order: 4 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-expense_amount::before { content: 'Сумма расхода' !important; }
+  #deal_data-group td.field-expense_rate {
+    order: 5 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-expense_rate::before { content: 'Курс расхода' !important; }
+  #deal_data-group td.field-expense_account {
+    order: 6 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-expense_account::before { content: 'Счет расхода' !important; }
+
+  #deal_data-group td.field-commission {
+    order: 7 !important; flex: 0 0 336px !important; min-width: 0 !important;
+  }
+  #deal_data-group td.field-commission::before { content: 'Комиссия' !important; }
+
+  /* ===== ДВИЖЕНИЯ КОНТРАГЕНТОВ ===== */
+  #debt_operations-group table {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    border: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+  #debt_operations-group thead { display: none !important; }
+  #debt_operations-group tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+  #debt_operations-group tbody:not(:has(.form-row)) { display: none !important; }
+
+  #debt_operations-group .form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px 20px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #debt_operations-group .form-row > td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 6px 0 !important;
+    background: transparent !important;
+    border: none !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+  }
+  #debt_operations-group .form-row > td::before {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: #1E1E1E !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    text-transform: none !important;
+    display: block !important;
+  }
+  #debt_operations-group .form-row > td > div {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    flex-grow: 1 !important;
+  }
+  #debt_operations-group .form-row > td > div > div {
+    width: 100% !important;
+  }
+
+  #debt_operations-group td.delete,
+  #debt_operations-group td.field-contractor { display: none !important; }
+
+  #debt_operations-group td.field-amount { order: 1 !important; }
+  #debt_operations-group td.field-amount::before { content: 'Сумма операции' !important; }
+  #debt_operations-group td.field-operation_type { order: 2 !important; }
+  #debt_operations-group td.field-operation_type::before { content: 'Тип операции' !important; }
+  #debt_operations-group td.field-percent { order: 3 !important; }
+  #debt_operations-group td.field-percent::before { content: 'Процент' !important; }
+  #debt_operations-group td.field-currency { order: 4 !important; }
+  #debt_operations-group td.field-currency::before { content: 'Валюта' !important; }
+  #debt_operations-group td.field-comment {
+    order: 5 !important;
+    grid-column: 1 / -1 !important;
+  }
+  #debt_operations-group td.field-comment::before { content: 'Комментарий' !important; }
+
+  /* Контрагент верхняя область */
+  .df-contractor-hidden { display: none !important; }
+  #content-main fieldset.df-contractor-mode {
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin-bottom: 8px !important;
+  }
+  #content-main fieldset.df-contractor-mode .aligned {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 20px !important;
+  }
+  #content-main fieldset.df-contractor-mode .form-row:has(.field-contractor) {
+    flex: 0 0 336px !important;
+    order: 0 !important;
+    padding: 6px 0 !important;
+  }
+  .df-contractor-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    height: 46px;
+    background: #F8F8F8;
+    border-radius: 20px;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+    order: 99;
+  }
+  .df-contractor-info-label {
+    font-weight: 500;
+    font-size: 12px;
+    color: #AAAFB9;
+  }
+  .df-contractor-info-value {
+    font-weight: 600;
+    font-size: 18px;
+    color: #101827;
+  }
+
+  /* Нижняя тройка полей */
+  .df-bottom-3 {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    padding: 6px 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    grid-column: 1 / -1 !important;
+  }
+  .df-bottom-3 > .form-row {
+    flex: 1 1 0 !important;
+    padding: 0 !important;
+  }
+  .df-bottom-3 > .form-row:has(.field-deal_1c) {
+    flex: 6 1 0 !important;
+  }
+
+  .submit-row {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .df-tab-hidden { display: none !important; }
+
+  /* ===== DARK THEME ===== */
+  .dark .df-bill-card { background: #1F2937; }
+  .dark .df-bill-card__name { color: #9CA3AF; }
+  .dark .df-bill-card__amount { color: #F9FAFB; }
+  .dark .df-bill-card__rate { color: #079669; }
+  .dark .df-tabs { border-color: #4B5563; }
+  .dark .df-tab { color: #6B7280; }
+  .dark .df-tab:hover { color: #9CA3AF; }
+  .dark .df-tab--active { color: #079669; background: #1F2937; }
+  .dark .df-section-title { color: #6B7280; }
+  .dark .df-section-line { border-color: #374151; }
+  .dark .df-datetime-field > label,
+  .dark .df-toggle-wrap > label { color: #E5E7EB !important; }
+  .dark #content-main fieldset { background: #1F2937 !important; }
+  .dark #content-main fieldset.df-contractor-mode { background: transparent !important; }
+  .dark #content-main .field-line label,
+  .dark #content-main .field-line .flex label { color: #E5E7EB !important; }
+  .dark #content-main .field-line input[type="text"],
+  .dark #content-main .field-line input[type="number"],
+  .dark #content-main .field-line input[type="url"],
+  .dark #content-main .field-line input[type="email"],
+  .dark #content-main .field-line textarea,
+  .dark #content-main .field-line select,
+  .dark #content-main td input[type="text"],
+  .dark #content-main td input[type="number"],
+  .dark #content-main td select,
+  .dark #content-main td textarea {
+    background: #111827 !important;
+    border-color: #374151 !important;
+    color: #F9FAFB !important;
+  }
+  .dark #content-main input::placeholder,
+  .dark #content-main textarea::placeholder { color: #6B7280 !important; }
+  .dark .df-icon-btn {
+    background: #111827 !important;
+    border-color: #374151 !important;
+  }
+  .dark .df-icon-btn:hover {
+    border-color: #079669 !important;
+    background: rgba(7,150,105,0.1) !important;
+  }
+  .dark .df-icon-btn svg path { stroke: #9CA3AF; }
+  .dark .df-toggle-slider { background-color: #374151; }
+  .dark .ts-wrapper .ts-control {
+    background: #111827 !important;
+    border-color: #374151 !important;
+    color: #F9FAFB !important;
+  }
+  .dark .ts-dropdown {
+    background: #1F2937 !important;
+    border-color: #374151 !important;
+  }
+  .dark .ts-dropdown .option { color: #F9FAFB !important; }
+  .dark .ts-dropdown .option:hover,
+  .dark .ts-dropdown .option.active {
+    background: rgba(7,150,105,0.15) !important;
+    color: #079669 !important;
+  }
+  .dark .ts-dropdown .option.selected {
+    background: #079669 !important;
+    color: #FFFFFF !important;
+  }
+  .dark #content-main .inline-related fieldset { background: #1F2937 !important; }
+  .dark #deal_data-group .form-row > td::before,
+  .dark #debt_operations-group .form-row > td::before { color: #E5E7EB !important; }
+  .dark .df-contractor-info { background: #1F2937; }
+  .dark .df-contractor-info-label { color: #6B7280; }
+  .dark .df-contractor-info-value { color: #F9FAFB; }
+</style>
+{% endblock %}
+
 {% block content %}
   <input type="hidden" name="autocomplete" value="{{ autocomplete }}">
-  <div class="custom-bills">
-      {% if not blocked %}
-          <ul class="bills__conrainer">
-              {% for bill in bills %}
-                  <li class="bills__item">
-                    <div class="bills__item-title">
-                        {{ bill.name }}
-                    </div>
-                    <div class="bills__item-price">
-                        {{bill.remainder|floatformat:3}} {% if bill.currency.short_name == "USDT" %} ₮ {% elif bill.currency.short_name == "USD" %} $ {% else %} ₽ {% endif %}
-                    </div>
-                    <div class="bills__item-exchenge-rate">
-                        {{bill.currency.rate|floatformat:3}}
-                    </div>
-                  </li>
-              {% empty %}
-                  <li>Нет счетов для отображения.</li>
-              {% endfor %}
-          </ul>
-      {% else %}
-        <ul class="bills__conrainer">
-              {% for bill in bills %}
-                  <li class="bills__item">
-                    <div class="bills__item-title">
-                        {{ bill.name }}
-                    </div>
-                    <div class="bills__item-price">
-                        {{bill.remainder|floatformat:3}}
-                    </div>
-                  </li>
-              {% empty %}
-                  <li>Нет счетов для отображения.</li>
-              {% endfor %}
-          </ul>
-      {% endif %}
+  <script>window.__dfNewDesign = true;</script>
+  <div class="df-bills">
+    {% for bill in bills %}
+      <div class="df-bill-card">
+        <span class="df-bill-card__name">{{ bill.name }}</span>
+        <span class="df-bill-card__amount">
+          {{ bill.remainder|floatformat:3 }}
+          {% if bill.currency.short_name == "USDT" %} ₮
+          {% elif bill.currency.short_name == "USD" %} $
+          {% else %} ₽{% endif %}
+        </span>
+        {% if not blocked %}
+          <span class="df-bill-card__rate">{{ bill.currency.rate|floatformat:3 }}</span>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="df-bill-card">
+        <span class="df-bill-card__name">Нет счетов</span>
+      </div>
+    {% endfor %}
   </div>
   {{ in_exes|json_script:"in-exes-data" }}
   <script>
-      const inExes = JSON.parse(document.getElementById('in-exes-data').textContent);
-      window.localStorage.setItem('in_exes', document.getElementById('in-exes-data').textContent)
-      window.localStorage.setItem('autocomplete', JSON.stringify("{{ autocomplete }}"))
-    </script>
-    
-{{ block.super }}
+    const inExes = JSON.parse(document.getElementById('in-exes-data').textContent);
+    window.localStorage.setItem('in_exes', document.getElementById('in-exes-data').textContent);
+    window.localStorage.setItem('autocomplete', JSON.stringify("{{ autocomplete }}"));
+  </script>
+
+  <div class="df-tabs" id="df-tabs">
+    <button type="button" class="df-tab df-tab--active" data-tab="main">Основные данные</button>
+    <button type="button" class="df-tab" data-tab="contractor">Контрагент</button>
+  </div>
+
+  {{ block.super }}
+
+  <script>
+  (function() {
+    console.log('[df] script start');
+    function init() {
+      try {
+      console.log('[df] init called');
+      var form = document.getElementById('deal_form') || document.querySelector('#content-main form') || document.querySelector('form');
+      if (!form) { console.warn('[df] no form'); return; }
+      console.log('[df] form id:', form.id, 'fieldsets:', form.querySelectorAll('fieldset').length);
+
+      var mainFieldset = null;
+      var allFs = document.querySelectorAll('#content-main fieldset');
+      console.log('[df] #content-main fieldsets:', allFs.length);
+      allFs.forEach(function(fs) {
+        var h2 = fs.querySelector('h2');
+        if (h2 && /Основные/i.test(h2.textContent)) mainFieldset = fs;
+      });
+      if (!mainFieldset && allFs.length > 0) mainFieldset = allFs[0];
+      if (!mainFieldset) mainFieldset = form.querySelector('fieldset');
+      if (!mainFieldset) {
+        mainFieldset = document.querySelector('#content-main fieldset, fieldset.module');
+      }
+      if (!mainFieldset) { console.warn('[df] no fieldset found anywhere'); return; }
+
+      var aligned = mainFieldset.querySelector('.aligned') || mainFieldset;
+      var tabsDiv = document.getElementById('df-tabs');
+
+      /* Заголовок "Общая информация" */
+      var hdr = document.createElement('div');
+      hdr.className = 'df-section-hdr';
+      hdr.style.gridColumn = '1 / -1';
+      hdr.style.order = '0';
+      hdr.innerHTML = '<span class="df-section-title">\u041E\u0431\u0449\u0430\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F</span><div class="df-section-line"></div>';
+      aligned.insertBefore(hdr, aligned.firstChild);
+
+      /* Дата/Время */
+      try {
+        var dateInput = form.querySelector('input[name="date_create_0"]');
+        var timeInput = form.querySelector('input[name="date_create_1"]');
+        if (dateInput && timeInput) {
+          var dateFieldLine = dateInput.closest('.field-line') || dateInput.closest('.form-row') || dateInput.parentElement;
+          var dateFormRow = dateInput.closest('.form-row');
+          dateFormRow.querySelectorAll('.datetimeshortcuts').forEach(function(el) {
+            el.style.cssText = 'position:absolute;left:-9999px;top:0;';
+          });
+          Array.from(dateFieldLine.children).forEach(function(ch) {
+            if (!ch.classList || !ch.classList.contains('datetimeshortcuts')) ch.style.display = 'none';
+          });
+          if (dateFormRow) {
+            dateFormRow.querySelectorAll('.timezonewarning, br').forEach(function(el) { el.style.display = 'none'; });
+            var origLbl = dateFormRow.querySelector('label[for*="date_create"]');
+            if (origLbl) origLbl.style.display = 'none';
+          }
+          var dtRow = document.createElement('div');
+          dtRow.className = 'df-datetime-row';
+          var dateField = document.createElement('div');
+          dateField.className = 'df-datetime-field';
+          var dateLbl = document.createElement('label');
+          dateLbl.textContent = '\u0414\u0430\u0442\u0430';
+          var dateWrap = document.createElement('div');
+          dateWrap.className = 'df-datetime-input-wrap';
+          dateInput.style.cssText = '';
+          dateInput.style.display = '';
+          dateWrap.appendChild(dateInput);
+          var calBtn = document.createElement('button');
+          calBtn.type = 'button';
+          calBtn.className = 'df-icon-btn';
+          calBtn.title = '\u041A\u0430\u043B\u0435\u043D\u0434\u0430\u0440\u044C';
+          calBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.6667 2.667H3.33333C2.59695 2.667 2 3.264 2 4V13.334C2 14.07 2.59695 14.667 3.33333 14.667H12.6667C13.403 14.667 14 14.07 14 13.334V4C14 3.264 13.403 2.667 12.6667 2.667Z" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.667 1.333V4" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round"/><path d="M5.333 1.333V4" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round"/><path d="M2 6.667H14" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round"/></svg>';
+          calBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              if (window.DateTimeShortcuts && DateTimeShortcuts.calendars && DateTimeShortcuts.calendars.length > 0) {
+                DateTimeShortcuts.openCalendar(0);
+                return;
+              }
+            } catch(ex) {}
+            var calLink = document.querySelector('[id^="calendarlink"]');
+            if (calLink) { calLink.click(); return; }
+            var tmpInput = document.createElement('input');
+            tmpInput.type = 'date';
+            tmpInput.style.cssText = 'position:absolute;opacity:0;width:0;height:0;';
+            dateWrap.appendChild(tmpInput);
+            tmpInput.addEventListener('change', function() {
+              if (tmpInput.value) dateInput.value = tmpInput.value;
+              tmpInput.remove();
+            });
+            tmpInput.showPicker ? tmpInput.showPicker() : tmpInput.click();
+          });
+          dateWrap.appendChild(calBtn);
+          dateField.appendChild(dateLbl);
+          dateField.appendChild(dateWrap);
+          var timeField = document.createElement('div');
+          timeField.className = 'df-datetime-field';
+          var timeLbl = document.createElement('label');
+          timeLbl.textContent = '\u0412\u0440\u0435\u043C\u044F';
+          var timeWrap = document.createElement('div');
+          timeWrap.className = 'df-datetime-input-wrap';
+          timeInput.style.cssText = '';
+          timeInput.style.display = '';
+          timeWrap.appendChild(timeInput);
+          var clockBtn = document.createElement('button');
+          clockBtn.type = 'button';
+          clockBtn.className = 'df-icon-btn';
+          clockBtn.title = '\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0432\u0440\u0435\u043C\u044F';
+          clockBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 14.666C11.682 14.666 14.667 11.682 14.667 8C14.667 4.318 11.682 1.333 8 1.333C4.318 1.333 1.333 4.318 1.333 8C1.333 11.682 4.318 14.666 8 14.666Z" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round"/><path d="M8 4V8L10.667 9.333" stroke="#5E6773" stroke-width="1.333" stroke-linecap="round"/></svg>';
+          clockBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              if (window.DateTimeShortcuts && DateTimeShortcuts.clockInputs && DateTimeShortcuts.clockInputs.length > 0) {
+                DateTimeShortcuts.openClock(0);
+                return;
+              }
+            } catch(ex) {}
+            var clockLink = document.querySelector('[id^="clocklink"]');
+            if (clockLink) { clockLink.click(); return; }
+            var tmpInput = document.createElement('input');
+            tmpInput.type = 'time';
+            tmpInput.step = '1';
+            tmpInput.style.cssText = 'position:absolute;opacity:0;width:0;height:0;';
+            timeWrap.appendChild(tmpInput);
+            tmpInput.addEventListener('change', function() {
+              if (tmpInput.value) timeInput.value = tmpInput.value;
+              tmpInput.remove();
+            });
+            tmpInput.showPicker ? tmpInput.showPicker() : tmpInput.click();
+          });
+          timeWrap.appendChild(clockBtn);
+          timeField.appendChild(timeLbl);
+          timeField.appendChild(timeWrap);
+          dtRow.appendChild(dateField);
+          dtRow.appendChild(timeField);
+          var warning = document.createElement('div');
+          warning.className = 'df-datetime-warning';
+          warning.style.gridColumn = '1 / -1';
+          warning.textContent = '\u0423\u043A\u0430\u0437\u0430\u043D\u043E \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430 (\u041C\u0421\u041A)';
+          dateFieldLine.appendChild(dtRow);
+          dateFieldLine.appendChild(warning);
+        }
+      } catch(e) { console.error('[df] datetime:', e); }
+
+      /* Тоггл */
+      try {
+        var closedCheckbox = form.querySelector('input[name="closed"]');
+        console.log('[df] closed:', closedCheckbox ? closedCheckbox.type : 'NOT FOUND');
+        if (!closedCheckbox) {
+          var closedSelect = form.querySelector('select[name="closed"]');
+          console.log('[df] closedSelect:', !!closedSelect);
+        }
+        if (closedCheckbox && closedCheckbox.type === 'checkbox') {
+          var closedRow = closedCheckbox.closest('.form-row');
+          var closedFieldLine = closedCheckbox.closest('.field-line') || closedRow;
+          var closedLabel = closedRow ? closedRow.querySelector('label') : null;
+          var closedText = closedLabel ? closedLabel.textContent.trim() : '\u0417\u0430\u043A\u0440\u044B\u0442\u0430';
+          Array.from(closedFieldLine.children).forEach(function(ch) { ch.style.display = 'none'; });
+          if (closedLabel) closedLabel.style.display = 'none';
+          var toggleWrap = document.createElement('div');
+          toggleWrap.className = 'df-toggle-wrap';
+          var tLbl = document.createElement('label');
+          tLbl.textContent = closedText;
+          var tDiv = document.createElement('div');
+          tDiv.className = 'df-toggle';
+          closedCheckbox.style.cssText = 'opacity:0;width:0;height:0;position:absolute;';
+          closedCheckbox.style.display = '';
+          var slider = document.createElement('span');
+          slider.className = 'df-toggle-slider';
+          tDiv.appendChild(closedCheckbox);
+          tDiv.appendChild(slider);
+          toggleWrap.appendChild(tLbl);
+          toggleWrap.appendChild(tDiv);
+          function toggleCb(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closedCheckbox.checked = !closedCheckbox.checked;
+            closedCheckbox.dispatchEvent(new Event('change'));
+          }
+          tLbl.addEventListener('click', toggleCb);
+          slider.addEventListener('click', toggleCb);
+          tDiv.addEventListener('click', function(e) {
+            if (e.target === closedCheckbox) return;
+            toggleCb(e);
+          });
+          closedFieldLine.appendChild(toggleWrap);
+        }
+      } catch(e) { console.error('[df] toggle:', e); }
+
+      /* Инфо-бар контрагента */
+      var infoBar = document.createElement('div');
+      infoBar.className = 'df-contractor-info df-tab-hidden';
+      infoBar.style.order = '99';
+      infoBar.innerHTML = '<span class="df-contractor-info-label">\u0421\u0447\u0435\u0442 \u041A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u0430</span><span class="df-contractor-info-value">\u2014</span>';
+      aligned.appendChild(infoBar);
+
+      /* Группировка нижних полей */
+      try {
+        var formRows = aligned.querySelectorAll('.form-row');
+        var rateRow = null, dutyRow = null, natRow = null, deal1cRow = null;
+        formRows.forEach(function(row) {
+          if (row.querySelector('.field-rate_contractors')) rateRow = row;
+          if (row.querySelector('.field-duty_deal')) dutyRow = row;
+          if (row.querySelector('.field-national_currency')) natRow = row;
+          if (row.querySelector('.field-deal_1c')) deal1cRow = row;
+        });
+        console.log('[df] bottom:', !!rateRow, !!dutyRow, !!natRow, !!deal1cRow);
+        var wrapper = document.createElement('div');
+        wrapper.className = 'df-bottom-3';
+        wrapper.style.order = '11';
+        aligned.appendChild(wrapper);
+        if (rateRow) { rateRow.style.order = ''; wrapper.appendChild(rateRow); }
+        if (dutyRow) { dutyRow.style.order = ''; wrapper.appendChild(dutyRow); }
+        if (natRow) { natRow.style.order = ''; wrapper.appendChild(natRow); }
+        if (deal1cRow) { deal1cRow.style.order = ''; wrapper.appendChild(deal1cRow); }
+      } catch(e) { console.error('[df] bottom:', e); }
+
+      /* Заголовки секций инлайнов */
+      var ieGroup = document.getElementById('deal_data-group');
+      var debtGroup = document.getElementById('debt_operations-group');
+      console.log('[df] inlines:', !!ieGroup, !!debtGroup);
+
+      function addSectionHeader(group, title) {
+        if (!group) return;
+        var fs = group.querySelector('fieldset');
+        if (!fs) return;
+        var el = document.createElement('div');
+        el.className = 'df-section-hdr';
+        el.innerHTML = '<span class="df-section-title">' + title + '</span><div class="df-section-line"></div>';
+        var target = fs.querySelector('.formset-wrapper') || fs.querySelector('[data-simplebar]') || fs.querySelector('table');
+        if (target) fs.insertBefore(el, target);
+        else fs.prepend(el);
+      }
+
+      addSectionHeader(ieGroup, '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430');
+      addSectionHeader(debtGroup, '\u0414\u0432\u0438\u0436\u0435\u043D\u0438\u044F \u043A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u043E\u0432');
+
+      /* Кнопки "Добавить" — выносим за пределы карточки */
+      function createAddButton(group, label) {
+        if (!group) return;
+        var tfootLink = group.querySelector('tfoot a');
+        if (!tfootLink) {
+          console.log('[df] no tfoot link in', group.id);
+          return;
+        }
+        var btn = document.createElement('a');
+        btn.href = '#';
+        btn.className = 'df-add-btn';
+        btn.textContent = label;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          tfootLink.click();
+        });
+        group.appendChild(btn);
+        console.log('[df] add-btn created for', group.id);
+      }
+      createAddButton(ieGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0442\u0440\u043E\u043A\u0443');
+      createAddButton(debtGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435');
+
+      [ieGroup, debtGroup].forEach(function(g) {
+        if (!g) return;
+        var h2 = g.querySelector('h2');
+        if (h2) h2.style.display = 'none';
+      });
+
+      /* Переключение вкладок */
+      if (debtGroup) debtGroup.classList.add('df-hidden');
+
+      if (tabsDiv) {
+        tabsDiv.addEventListener('click', function(e) {
+          var tab = e.target.closest('.df-tab');
+          if (!tab) return;
+          var target = tab.dataset.tab;
+          tabsDiv.querySelectorAll('.df-tab').forEach(function(t) {
+            t.classList.toggle('df-tab--active', t.dataset.tab === target);
+          });
+          if (target === 'main') {
+            mainFieldset.querySelectorAll('.form-row').forEach(function(row) { row.classList.remove('df-contractor-hidden'); });
+            hdr.classList.remove('df-contractor-hidden');
+            mainFieldset.classList.remove('df-contractor-mode');
+            infoBar.classList.add('df-tab-hidden');
+            if (ieGroup) ieGroup.classList.remove('df-hidden');
+            if (debtGroup) debtGroup.classList.add('df-hidden');
+          } else {
+            mainFieldset.querySelectorAll('.form-row').forEach(function(row) {
+              if (row.querySelector('.field-contractor') || row.querySelector('[name="contractor"]') || row.querySelector('select[name="contractor"]')) {
+                row.classList.remove('df-contractor-hidden');
+              } else {
+                row.classList.add('df-contractor-hidden');
+              }
+            });
+            hdr.classList.add('df-contractor-hidden');
+            var btm3 = aligned.querySelector('.df-bottom-3');
+            if (btm3) btm3.classList.add('df-contractor-hidden');
+            mainFieldset.classList.add('df-contractor-mode');
+            infoBar.classList.remove('df-tab-hidden');
+            if (ieGroup) ieGroup.classList.add('df-hidden');
+            if (debtGroup) debtGroup.classList.remove('df-hidden');
+          }
+        });
+      }
+
+      /* Плейсхолдеры */
+      function setPlaceholders() {
+        var ph = {
+          'income_amount': '0.0', 'income_rate': '0.0', 'expense_amount': '0.0',
+          'expense_rate': '0.0', 'commission': '0.0',
+          'amount': '0.0', 'percent': '0.0'
+        };
+        Object.keys(ph).forEach(function(f) {
+          document.querySelectorAll('td.field-' + f + ' input').forEach(function(inp) {
+            inp.setAttribute('placeholder', ph[f]);
+          });
+        });
+        document.querySelectorAll('td.field-comment textarea, td.field-comment input').forEach(function(el) {
+          el.setAttribute('placeholder', '\u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439');
+        });
+        document.querySelectorAll('.field-line input[name="comment"]').forEach(function(el) {
+          el.setAttribute('placeholder', '\u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439');
+        });
+        document.querySelectorAll('.field-line input[name="deal_1c"]').forEach(function(el) {
+          el.setAttribute('placeholder', '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435');
+        });
+        document.querySelectorAll('.field-line input[name="rate_contractors"], .field-line input[name="rate"], .field-line input[name="duty_deal"], .field-line input[name="national_currency"]').forEach(function(el) {
+          el.setAttribute('placeholder', '0.0');
+        });
+      }
+      setPlaceholders();
+      setTimeout(setPlaceholders, 500);
+
+      /* Tom-Select */
+      var isDark = document.documentElement.classList.contains('dark');
+      function styleDropdowns() {
+        document.querySelectorAll('.ts-dropdown').forEach(function(dd) {
+          dd.style.setProperty('border-radius', '12px', 'important');
+          dd.style.setProperty('overflow', 'hidden', 'important');
+          dd.style.setProperty('border', '1px solid ' + (isDark ? '#374151' : '#D7DBE4'), 'important');
+          dd.style.setProperty('box-shadow', '0 4px 16px rgba(0,0,0,0.08)', 'important');
+          dd.style.setProperty('background', isDark ? '#1F2937' : '#FFFFFF', 'important');
+          dd.style.setProperty('margin-top', '4px', 'important');
+        });
+      }
+      var observer = new MutationObserver(function() { styleDropdowns(); });
+      observer.observe(document.body, { childList: true, subtree: true });
+      styleDropdowns();
+
+      console.log('[df] DTS:', !!window.DateTimeShortcuts, window.DateTimeShortcuts ? 'cal:' + (DateTimeShortcuts.calendars||[]).length + ' clk:' + (DateTimeShortcuts.clockInputs||[]).length : '-');
+      console.log('[df] calLink:', document.querySelectorAll('[id^="calendarlink"]').length, 'clkLink:', document.querySelectorAll('[id^="clocklink"]').length);
+      console.log('[df] tfoot ie:', document.querySelectorAll('#deal_data-group tfoot a').length, 'debt:', document.querySelectorAll('#debt_operations-group tfoot a').length);
+      console.log('[df] init DONE');
+      } catch(e) { console.error('[df] FATAL:', e.message, e.stack); }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(init, 300); });
+    } else {
+      setTimeout(init, 300);
+    }
+  })();
+  </script>
 {% endblock %}
