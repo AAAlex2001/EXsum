@@ -1,161 +1,893 @@
 {% extends "admin/change_list.html" %}
 
 {% load static %}
+
+{% block content_before %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== RESET for custom area ===== */
+  .pp-wrap, .pp-wrap * { box-sizing: border-box; margin: 0; padding: 0; }
+  .pp-wrap ul, .pp-wrap li { list-style: none; }
+  .pp-wrap a { text-decoration: none; color: inherit; }
+  .pp-wrap {
+    font-family: 'Inter', sans-serif;
+    color: #101827;
+    width: 100%;
+  }
+
+  /* ===== 1. TITLE BAR (шапка сделки) ===== */
+  .pp-title-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 20px;
+    gap: 10px;
+    height: 40px;
+    align-self: stretch;
+  }
+  .pp-title-bar__text {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 19px;
+    color: #101827;
+  }
+  .pp-title-bar__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    height: 32px;
+  }
+  .pp-btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 9px 12px;
+    gap: 6px;
+    height: 32px;
+    background: #FFFFFF;
+    border: 1px solid #DEE2EA;
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  .pp-btn:hover { background: #F9FAFB; }
+  .pp-btn__icon { width: 20px; height: 20px; flex: none; }
+  .pp-btn__icon svg { width: 16px; height: 16px; }
+  .pp-btn__label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px;
+    gap: 10px;
+    height: 21px;
+  }
+  .pp-btn__label span {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 17px;
+    color: #4B5563;
+    white-space: nowrap;
+  }
+
+  /* ===== 2. STATS SECTION (курсы + метрики + счета) ===== */
+  .pp-stats {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 13px 20px 0px;
+    gap: 16px;
+    align-self: stretch;
+  }
+  .pp-stats__left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    gap: 16px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .pp-stats__right {
+    width: 550px;
+    min-width: 550px;
+    flex: none;
+    align-self: stretch;
+  }
+
+  /* -- Courses panel -- */
+  .pp-courses {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0px 0px 8px;
+    gap: 10px;
+    height: 81px;
+    border: 1px solid #DEE2EA;
+    border-radius: 12px;
+    align-self: stretch;
+    overflow: hidden;
+  }
+  .pp-courses__header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px 0;
+    gap: 7px;
+    height: 27px;
+    background: #F8F8F8;
+    align-self: stretch;
+  }
+  .pp-courses__header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    height: 15px;
+    align-self: stretch;
+  }
+  .pp-courses__header-text {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    flex: 1;
+  }
+  .pp-courses__body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 6px;
+    height: 36px;
+    align-self: stretch;
+    flex-grow: 0;
+  }
+  .pp-courses__item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    gap: 8px;
+    height: 36px;
+    border-radius: 10px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .pp-courses__divider {
+    width: 0;
+    align-self: stretch;
+    border-left: 1px solid #DEE2EA;
+    flex: none;
+  }
+  .pp-courses__name {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 17px;
+    color: #5E6773;
+    white-space: nowrap;
+  }
+  .pp-courses__vals {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+  .pp-courses__rate {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    white-space: nowrap;
+  }
+  .pp-courses__badge {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 2px 6px 2px 2px;
+    height: 20px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .pp-courses__badge--up { background: #DAFEF3; }
+  .pp-courses__badge--down { background: #FFEAEA; }
+  .pp-courses__badge-icon { width: 16px; height: 16px; flex: none; }
+  .pp-courses__badge-text {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+  }
+  .pp-courses__badge--up .pp-courses__badge-text { color: #079669; }
+  .pp-courses__badge--down .pp-courses__badge-text { color: #FF5E5E; }
+
+  /* -- Metrics grid -- */
+  .pp-metrics {
+    position: relative;
+    width: 100%;
+    height: 277px;
+    border-radius: 20px;
+    align-self: stretch;
+  }
+  .pp-metrics__card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 12px;
+    gap: 8px;
+    position: absolute;
+    height: 49px;
+    border: 1px solid #DEE2EA;
+    border-radius: 12px;
+  }
+  /* Two columns: left = 0, right = calc(50% + 4px); each width = calc(50% - 4px) */
+  .pp-metrics__card--c0 { left: 0; width: calc(50% - 4px); }
+  .pp-metrics__card--c1 { left: calc(50% + 4px); width: calc(50% - 4px); }
+  .pp-metrics__card--r0 { top: 0; }
+  .pp-metrics__card--r1 { top: 57px; }
+  .pp-metrics__card--r2 { top: 114px; }
+  .pp-metrics__card--r3 { top: 171px; }
+  .pp-metrics__card--r4 { top: 228px; }
+
+  .pp-metrics__card-label {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pp-metrics__card-value {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    white-space: nowrap;
+    flex: none;
+  }
+
+  /* -- Accounts panel (right column) -- */
+  .pp-accounts {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px 0px 8px;
+    gap: 2px;
+    width: 550px;
+    height: 374px;
+    border: 1px solid #DEE2EA;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .pp-accounts__header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px 0;
+    gap: 7px;
+    height: 27px;
+    background: #F8F8F8;
+    align-self: stretch;
+  }
+  .pp-accounts__header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    height: 15px;
+    align-self: stretch;
+  }
+  .pp-accounts__header-text {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    flex: 1;
+  }
+  .pp-accounts__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    overflow-y: auto;
+    align-self: stretch;
+    flex: 1;
+  }
+  .pp-accounts__row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 4px;
+    height: 33.89px;
+    border-radius: 20px;
+    align-self: stretch;
+    flex: 1 0 auto;
+  }
+  .pp-accounts__row a {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+  .pp-accounts__divider {
+    height: 0;
+    align-self: stretch;
+    border-top: 1px solid #DEE2EA;
+    flex: none;
+  }
+  .pp-accounts__name-wrap {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+  }
+  .pp-accounts__flag {
+    width: 20px;
+    height: 20px;
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 24px;
+    color: #5E6773;
+    flex: none;
+  }
+  .pp-accounts__name {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    white-space: nowrap;
+  }
+  .pp-accounts__values {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .pp-accounts__amount {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    white-space: nowrap;
+  }
+  .pp-accounts__rate {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #079669;
+    white-space: nowrap;
+    width: 54px;
+    text-align: right;
+  }
+
+  /* ===== 3. CAROUSEL (карусель контрагентов) ===== */
+  .pp-carousel-wrap {
+    position: relative;
+    padding: 16px 20px 0px 20px;
+    overflow: hidden;
+  }
+  .pp-carousel {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    isolation: isolate;
+  }
+  .pp-carousel::-webkit-scrollbar { display: none; }
+  .pp-carousel__card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px 0px 8px;
+    gap: 8px;
+    width: 200px;
+    min-width: 200px;
+    height: 89px;
+    border: 1px solid #DEE2EA;
+    border-radius: 12px;
+    overflow: hidden;
+    flex: none;
+  }
+  .pp-carousel__card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px 0;
+    gap: 7px;
+    height: 27px;
+    background: #F8F8F8;
+    align-self: stretch;
+  }
+  .pp-carousel__card-header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    height: 15px;
+    align-self: stretch;
+  }
+  .pp-carousel__card-name {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    color: #101827;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pp-carousel__card-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    text-align: right;
+    color: #5E6773;
+    flex: 1;
+    white-space: nowrap;
+  }
+  .pp-carousel__card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 12px;
+    height: 46px;
+    align-self: stretch;
+  }
+  .pp-carousel__card-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    gap: 2px;
+    height: 23px;
+    align-self: stretch;
+  }
+  .pp-carousel__card-label {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+  }
+  .pp-carousel__card-val {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 15px;
+    color: #101827;
+  }
+
+  /* Fade gradient */
+  .pp-carousel-fade {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: 173px;
+    height: 100%;
+    background: linear-gradient(270deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+  /* Caret arrow */
+  .pp-carousel-arrow {
+    position: absolute;
+    top: calc(50% - 16px);
+    right: -8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid #DEE2EA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    z-index: 3;
+    pointer-events: all;
+  }
+  .pp-carousel-arrow:hover { background: #F9FAFB; }
+  .pp-carousel-arrow svg {
+    width: 16px;
+    height: 16px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
-  <div class="custom-bills">
-      {% if not blocked %}
-        <ul class="course-list">
-            {% for duty in courses %}
-                <li class="course-item">
-                    <div class="course-name">{{ duty.name }}</div>
-                    <div class="course-value">{{ duty.value|floatformat:3 }}</div>
-                    <div>{{ duty.variation}}</div>
-                </li>
-            {% empty %}
-                <li>Нет курсов.</li>
-            {% endfor %}
-        </ul>
-        <br>
-          <ul class="bills__conrainer"
-    style="display:flex; flex-wrap:wrap; gap:16px;">
+<div class="pp-wrap">
 
-    {% for bill in bills %}
-        <li class="bills__item"
-            style="
-                {% if forloop.counter <= 2 %}
-                    border:2px solid #2ecc71;
-                {% endif %}
-            "
-        >
-            <a href="{% url 'admin:catalog_bill_change' bill.id %}"
-           style="text-decoration:none; color:inherit; display:block;">
-            <div class="bills__item-title">
-                {{ bill.name }}
-            </div>
-
-            <div class="bills__item-price">
-                {{ bill.remainder|floatformat:3 }}
-                {% if bill.currency.short_name == 'USDT' %} ₮
-                {% elif bill.currency.short_name == 'USD' %} $
-                {% else %} ₽
-                {% endif %}
-            </div>
-
-            <div class="bills__item-exchenge-rate">
-                {{ bill.currency.rate|floatformat:3 }}
-            </div>
-            </a>
-        </li>
-              {% if forloop.counter == 2 %}
-                    <br>
-                {% endif %}
-    {% empty %}
-        <li>Нет счетов для отображения.</li>
-    {% endfor %}
-</ul>
-
-        <div class="duty__container">
-            <div class="duty__common-container">
-                <p class="duty__common-title">Общий долг</p>
-                <p class="duty__common-desc">{{dutys_all}}</p>
-            </div>
-            <br>
-            <div class="duty__common-container">
-                <p class="duty__common-title">Общий баланс ликвидности по себестоимости</p>
-                <p class="duty__common-desc">{{bills_amount}}</p>
-            </div>
-            <br>
-            {% if is_admin %}
-            <div class="duty__common-container">
-                <p class="duty__common-title">Общий баланс ликвидности по рынку</p>
-                <p class="duty__common-desc">{{bills_amount_admin}}</p>
-            </div>
-            <br>
-            <div class="duty__common-container">
-                <p class="duty__common-title">Разница</p>
-                <p class="duty__common-desc">{{bills_amount_dif}}</p>
-            </div>
-            <br>
-            <div class="duty__common-container">
-                <p class="duty__common-title">Суммма всех моих обязательств в USDT</p>
-                <p class="duty__common-desc">{{sum_obligation}}</p>
-            </div>
-            <br>
-            <div class="duty__common-container">
-                <p class="duty__common-title">Общее количество USDT на счетах</p>
-                <p class="duty__common-desc">{{sum_usdt}}</p>
-            </div>
-            <br>
-            <div class="duty__common-container">
-                <p class="duty__common-title">Свободные USDT</p>
-                <p class="duty__common-desc">{{free_usdt}}</p>
-            </div>
-            <br>
-            {% endif %}
-            <ul class="contractors__conrainer-items">
-                {% for duty in dutys %}
-                    <li class="contractor__item">
-                        <div class="contractor__item-title">{{ duty.name }}</div>
-                        <div class="contractor__item-desc">
-                            <span>{{ duty.duty|floatformat:3 }} ₽</span>
-                        </div>
-                        <div class="contractor__item-desc">
-                            <span>{{ duty.duty_usdt|floatformat:3 }} ₮</span>
-                        </div>
-                    </li>
-                {% empty %}
-                    <li>Нет долгов для отображения.</li>
-                {% endfor %}
-            </ul>
-        </div>
-      {% else %}
-        <ul class="course-list">
-            {% for duty in courses %}
-                <li class="course-item">
-                    <div class="course-name">{{ duty.name }}</div>
-                    <div class="course-value">{{ duty.value|floatformat:3 }}</div>
-                </li>
-            {% empty %}
-                <li>Нет курсов.</li>
-            {% endfor %}
-        </ul>
-        <br>
-        <ul class="bills__conrainer">
-              {% for bill in bills %}
-                  <li class="bills__item">
-                    <div class="bills__item-title">
-                        {{ bill.name }}
-                    </div>
-                    <div class="bills__item-price">
-                        {{bill.remainder|floatformat:3}} {% if bill.currency.short_name == "USDT" %} ₮ {% elif bill.currency.short_name == "USD" %} $ {% else %} ₽ {% endif %}
-                    </div>
-                  </li>
-              {% empty %}
-                  <li>Нет счетов для отображения.</li>
-              {% endfor %}
-          </ul>
-
-      <div class="duty__container">
-            <div class="duty__common-container">
-                <p class="duty__common-title">Общий долг</p>
-                <p class="duty__common-desc">{{dutys_all}}</p>
-            </div>
-            <br>
-            <ul class="contractors__conrainer-items">
-                {% for duty in dutys %}
-                    <li class="contractor__item">
-                        <div class="contractor__item-title"> {{ duty.name }} </div>
-                        <div class="contractor__item-desc"> {{duty.duty|floatformat:3}} </div>
-                    </li>
-                {% empty %}
-                    <li>Нет долгов для отображения.</li>
-                {% endfor %}
-            </ul>
-        </div>
-      {% endif %}
+  {# ===== 1. TITLE BAR ===== #}
+  <div class="pp-title-bar">
+    <span class="pp-title-bar__text">Сделки</span>
+    <div class="pp-title-bar__actions">
+      <button class="pp-btn" onclick="location.href='?recount=1'" type="button">
+        <span class="pp-btn__icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 7.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" stroke="#4B5563" stroke-width="2"/>
+            <path d="M10 10v6.667" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 13.333h2.5" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="pp-btn__label"><span>Пересчитать</span></div>
+      </button>
+      <button class="pp-btn" onclick="location.href='?recount500=1'" type="button">
+        <span class="pp-btn__icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 7.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" stroke="#4B5563" stroke-width="2"/>
+            <path d="M10 10v6.667" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 13.333h2.5" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div class="pp-btn__label"><span>Пересчитать 500</span></div>
+      </button>
+    </div>
   </div>
-  {{ block.super }}
+
+  {% if not blocked %}
+
+  {# ===== 2. STATS SECTION ===== #}
+  <div class="pp-stats">
+
+    {# LEFT COLUMN #}
+    <div class="pp-stats__left">
+
+      {# Courses panel #}
+      <div class="pp-courses">
+        <div class="pp-courses__header">
+          <div class="pp-courses__header-row">
+            <span class="pp-courses__header-text">Курсы</span>
+          </div>
+        </div>
+        <div class="pp-courses__body">
+          {% for c in courses %}
+            {% if not forloop.first %}
+              <div class="pp-courses__divider"></div>
+            {% endif %}
+            <div class="pp-courses__item">
+              <span class="pp-courses__name">{{ c.name }}</span>
+              <div class="pp-courses__vals">
+                <span class="pp-courses__rate">{{ c.value|floatformat:3 }}</span>
+                {% if c.variation %}
+                  {% with var=c.variation|stringformat:"s" %}
+                    {% if "-" in var %}
+                      <div class="pp-courses__badge pp-courses__badge--down">
+                        <svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 3.5V12.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M12 8.5L8 12.5L4 8.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="pp-courses__badge-text">{{ c.variation }}</span>
+                      </div>
+                    {% else %}
+                      <div class="pp-courses__badge pp-courses__badge--up">
+                        <svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 12.5V3.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M4 7.5L8 3.5L12 7.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="pp-courses__badge-text">{{ c.variation }}</span>
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="pp-courses__item">
+              <span class="pp-courses__name">Нет курсов</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Metrics grid #}
+      <div class="pp-metrics">
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r0">
+          <span class="pp-metrics__card-label">Общий долг</span>
+          <span class="pp-metrics__card-value">{{ dutys_all }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r0">
+          <span class="pp-metrics__card-label">Общий баланс ликвидности по себестоимости</span>
+          <span class="pp-metrics__card-value">{{ bills_amount }}</span>
+        </div>
+        {% if is_admin %}
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r1">
+          <span class="pp-metrics__card-label">Общий баланс ликвидности по рынку</span>
+          <span class="pp-metrics__card-value">{{ bills_amount_admin }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r1">
+          <span class="pp-metrics__card-label">Разница</span>
+          <span class="pp-metrics__card-value">{{ bills_amount_dif }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r2">
+          <span class="pp-metrics__card-label">Сумма всех моих обязательств в USDT</span>
+          <span class="pp-metrics__card-value">{{ sum_obligation }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r2">
+          <span class="pp-metrics__card-label">Общее количество USDT на счетах</span>
+          <span class="pp-metrics__card-value">{{ sum_usdt }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r3">
+          <span class="pp-metrics__card-label">Свободные USDT</span>
+          <span class="pp-metrics__card-value">{{ free_usdt }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r3">
+          <span class="pp-metrics__card-label">Сумма всех моих обязательств в рублях</span>
+          <span class="pp-metrics__card-value">{{ sum_obligation_rub|default:"—" }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r4">
+          <span class="pp-metrics__card-label">Общее количество рублей на счетах</span>
+          <span class="pp-metrics__card-value">{{ sum_rub|default:"—" }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r4">
+          <span class="pp-metrics__card-label">Свободные рубли</span>
+          <span class="pp-metrics__card-value">{{ free_rub|default:"—" }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    {# RIGHT COLUMN — Accounts #}
+    <div class="pp-stats__right">
+      <div class="pp-accounts">
+        <div class="pp-accounts__header">
+          <div class="pp-accounts__header-row">
+            <span class="pp-accounts__header-text">Счета</span>
+          </div>
+        </div>
+        <div class="pp-accounts__body">
+          {% for bill in bills %}
+            {% if not forloop.first %}
+              <div class="pp-accounts__divider"></div>
+            {% endif %}
+            <div class="pp-accounts__row">
+              <a href="{% url 'admin:catalog_bill_change' bill.id %}">
+                <div class="pp-accounts__name-wrap">
+                  {% if bill.currency.short_name == 'USDT' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.currency.short_name == 'USD' %}
+                    <span class="pp-accounts__flag">🇺🇸</span>
+                  {% else %}
+                    <span class="pp-accounts__flag">🇷🇺</span>
+                  {% endif %}
+                  <span class="pp-accounts__name">{{ bill.name }}</span>
+                </div>
+                <div class="pp-accounts__values">
+                  <span class="pp-accounts__amount">
+                    {{ bill.remainder|floatformat:3 }}
+                    {% if bill.currency.short_name == 'USDT' %} ₮{% elif bill.currency.short_name == 'USD' %} ${% else %} ₽{% endif %}
+                  </span>
+                  <span class="pp-accounts__rate">{{ bill.currency.rate|floatformat:3 }}</span>
+                </div>
+              </a>
+            </div>
+          {% empty %}
+            <div class="pp-accounts__row">
+              <span class="pp-accounts__name">Нет счетов</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# ===== 3. CAROUSEL ===== #}
+  <div class="pp-carousel-wrap">
+    <div class="pp-carousel" id="ppCarousel">
+      {% for duty in dutys %}
+      <div class="pp-carousel__card">
+        <div class="pp-carousel__card-header">
+          <div class="pp-carousel__card-header-row">
+            <span class="pp-carousel__card-name">{{ duty.name }}</span>
+            <span class="pp-carousel__card-subtitle">Контрагент</span>
+          </div>
+        </div>
+        <div class="pp-carousel__card-body">
+          <div class="pp-carousel__card-row">
+            <span class="pp-carousel__card-label">USDT</span>
+            <span class="pp-carousel__card-val">{{ duty.duty_usdt|floatformat:1 }} ₮</span>
+          </div>
+          <div class="pp-carousel__card-row">
+            <span class="pp-carousel__card-label">РУБ</span>
+            <span class="pp-carousel__card-val">{{ duty.duty|floatformat:0 }} ₽</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="pp-carousel__card">
+        <div class="pp-carousel__card-header">
+          <div class="pp-carousel__card-header-row">
+            <span class="pp-carousel__card-name">Нет долгов</span>
+            <span class="pp-carousel__card-subtitle"></span>
+          </div>
+        </div>
+        <div class="pp-carousel__card-body"></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pp-carousel-fade"></div>
+    <div class="pp-carousel-arrow" onclick="document.getElementById('ppCarousel').scrollBy({left:220,behavior:'smooth'})">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.5 4.8L9.7 8L6.5 11.2" fill="#101827"/>
+      </svg>
+    </div>
+  </div>
+
+  {% else %}
+
+  {# ===== BLOCKED VIEW ===== #}
+  <div class="pp-stats">
+    <div class="pp-stats__left">
+      <div class="pp-courses">
+        <div class="pp-courses__header">
+          <div class="pp-courses__header-row">
+            <span class="pp-courses__header-text">Курсы</span>
+          </div>
+        </div>
+        <div class="pp-courses__body">
+          {% for c in courses %}
+            {% if not forloop.first %}
+              <div class="pp-courses__divider"></div>
+            {% endif %}
+            <div class="pp-courses__item">
+              <span class="pp-courses__name">{{ c.name }}</span>
+              <div class="pp-courses__vals">
+                <span class="pp-courses__rate">{{ c.value|floatformat:3 }}</span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="pp-courses__item"><span class="pp-courses__name">Нет курсов</span></div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="pp-metrics">
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r0">
+          <span class="pp-metrics__card-label">Общий долг</span>
+          <span class="pp-metrics__card-value">{{ dutys_all }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="pp-stats__right">
+      <div class="pp-accounts">
+        <div class="pp-accounts__header">
+          <div class="pp-accounts__header-row">
+            <span class="pp-accounts__header-text">Счета</span>
+          </div>
+        </div>
+        <div class="pp-accounts__body">
+          {% for bill in bills %}
+            {% if not forloop.first %}
+              <div class="pp-accounts__divider"></div>
+            {% endif %}
+            <div class="pp-accounts__row">
+              <div class="pp-accounts__name-wrap">
+                {% if bill.currency.short_name == 'USDT' %}
+                  <span class="pp-accounts__flag">🇦🇪</span>
+                {% elif bill.currency.short_name == 'USD' %}
+                  <span class="pp-accounts__flag">🇺🇸</span>
+                {% else %}
+                  <span class="pp-accounts__flag">🇷🇺</span>
+                {% endif %}
+                <span class="pp-accounts__name">{{ bill.name }}</span>
+              </div>
+              <div class="pp-accounts__values">
+                <span class="pp-accounts__amount">
+                  {{ bill.remainder|floatformat:3 }}
+                  {% if bill.currency.short_name == 'USDT' %} ₮{% elif bill.currency.short_name == 'USD' %} ${% else %} ₽{% endif %}
+                </span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="pp-accounts__row"><span class="pp-accounts__name">Нет счетов</span></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pp-carousel-wrap">
+    <div class="pp-carousel" id="ppCarouselBlocked">
+      {% for duty in dutys %}
+      <div class="pp-carousel__card">
+        <div class="pp-carousel__card-header">
+          <div class="pp-carousel__card-header-row">
+            <span class="pp-carousel__card-name">{{ duty.name }}</span>
+            <span class="pp-carousel__card-subtitle">Контрагент</span>
+          </div>
+        </div>
+        <div class="pp-carousel__card-body">
+          <div class="pp-carousel__card-row">
+            <span class="pp-carousel__card-label">РУБ</span>
+            <span class="pp-carousel__card-val">{{ duty.duty|floatformat:3 }} ₽</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="pp-carousel__card">
+        <div class="pp-carousel__card-header">
+          <div class="pp-carousel__card-header-row">
+            <span class="pp-carousel__card-name">Нет долгов</span>
+            <span class="pp-carousel__card-subtitle"></span>
+          </div>
+        </div>
+        <div class="pp-carousel__card-body"></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="pp-carousel-fade"></div>
+    <div class="pp-carousel-arrow" onclick="document.getElementById('ppCarouselBlocked').scrollBy({left:220,behavior:'smooth'})">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.5 4.8L9.7 8L6.5 11.2" fill="#101827"/>
+      </svg>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{{ block.super }}
 {% endblock %}
 
 {% block result_list %}
@@ -174,7 +906,7 @@
             if(+key.id === +code){
                 el.querySelector('tr').style = `background: ${key.custom}`
             }
-        }        
+        }
     })
   </script>
   <script src="{% static 'operation/custom_admin.js' %}"></script>
