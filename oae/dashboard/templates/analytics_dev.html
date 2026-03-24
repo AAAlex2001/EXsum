@@ -1,0 +1,19 @@
+{% extends "unfold/layouts/base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="p-8 bg-white rounded-lg shadow-lg text-center">
+    <h1 class="text-2xl font-semibold mb-6">Выберите тип аналитики</h1>
+    <div class="flex gap-4 justify-center">
+      <a href="{% url 'admin:analytics_view' %}?type=days"
+         class="px-6 py-3 bg-green-600 text-white rounded-full font-medium shadow hover:bg-green-700 transition">
+        Аналитика доход
+      </a>
+      <a href="{% url 'admin:analytics_view_dds' %}?type=dds"
+         class="px-6 py-3 bg-green-600 text-white rounded-full font-medium shadow hover:bg-green-700 transition">
+        Аналитика ДДС
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

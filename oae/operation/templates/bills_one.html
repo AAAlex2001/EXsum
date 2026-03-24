@@ -1,0 +1,50 @@
+{% extends "admin/change_form.html" %}
+
+{% load static %}
+{% block content %}
+  <input type="hidden" name="autocomplete" value="{{ autocomplete }}">
+  <div class="custom-bills">
+      {% if not blocked %}
+          <ul class="bills__conrainer">
+              {% for bill in bills %}
+                  <li class="bills__item">
+                    <div class="bills__item-title">
+                        {{ bill.name }}
+                    </div>
+                    <div class="bills__item-price">
+                        {{bill.remainder|floatformat:3}} {% if bill.currency.short_name == "USDT" %} ₮ {% elif bill.currency.short_name == "USD" %} $ {% else %} ₽ {% endif %}
+                    </div>
+                    <div class="bills__item-exchenge-rate">
+                        {{bill.currency.rate|floatformat:3}}
+                    </div>
+                  </li>
+              {% empty %}
+                  <li>Нет счетов для отображения.</li>
+              {% endfor %}
+          </ul>
+      {% else %}
+        <ul class="bills__conrainer">
+              {% for bill in bills %}
+                  <li class="bills__item">
+                    <div class="bills__item-title">
+                        {{ bill.name }}
+                    </div>
+                    <div class="bills__item-price">
+                        {{bill.remainder|floatformat:3}}
+                    </div>
+                  </li>
+              {% empty %}
+                  <li>Нет счетов для отображения.</li>
+              {% endfor %}
+          </ul>
+      {% endif %}
+  </div>
+  {{ in_exes|json_script:"in-exes-data" }}
+  <script>
+      const inExes = JSON.parse(document.getElementById('in-exes-data').textContent);
+      window.localStorage.setItem('in_exes', document.getElementById('in-exes-data').textContent)
+      window.localStorage.setItem('autocomplete', JSON.stringify("{{ autocomplete }}"))
+    </script>
+    
+{{ block.super }}
+{% endblock %}

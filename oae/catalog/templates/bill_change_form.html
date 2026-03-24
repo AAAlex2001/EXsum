@@ -1,0 +1,72 @@
+{% extends "admin/change_form.html" %}
+{% load unfold i18n %}
+
+{% block content %}
+    {{ block.super }}
+
+    <div class="mt-10">
+        <div class="unfold-card">
+            <div class="unfold-card-header">
+                <h2 class="unfold-card-title">
+                    {% trans "История изменения счёта" %}
+                </h2>
+            </div>
+
+            <div class="unfold-card-body overflow-x-auto">
+
+                <table class="unfold-table w-full table-fixed border-collapse border border-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="text-center w-1/6 border border-gray-200">{% trans "Приход" %}</th>
+                            <th class="text-center w-1/6 border border-gray-200">{% trans "Баланс" %}</th>
+                            <th class="text-center w-1/6 border border-gray-200">{% trans "Расход" %}</th>
+                            <th class="text-center w-1/6 border border-gray-200">{% trans "Сделка" %}</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for h in history_bills %}
+                        <tr>
+                            <td class="text-center font-mono border border-gray-200">
+                                {% if h.in_ex.income_account.id == bill_id %}
+                                    {{ h.in_ex.income_amount|default:"—"|floatformat:3 }}
+                                {% else %}  {% endif %}
+                            </td>
+                            <td class="text-center font-mono border border-gray-200">
+                                {% if h.in_ex.income_account.id == bill_id %}
+                                    {{ h.income_after|default:"—"|floatformat:3 }}
+                                {% elif h.in_ex.expense_account.id == bill_id %}
+                                    {{ h.expense_after|default:"—"|floatformat:3 }}
+                                {% else %}  {% endif %}
+                            </td>
+                            <td class="text-center font-mono border border-gray-200">
+                                {% if h.in_ex.expense_account.id == bill_id %}
+                                    {{ h.in_ex.expense_amount|default:"—"|floatformat:3 }}
+                                {% else %}  {% endif %}
+                            </td>
+
+                            <td class="text-center border border-gray-200">
+                                {% if h.in_ex.deal %}
+                                    <a href="{% url 'admin:operation_deal_change' h.in_ex.deal.id %}" class="unfold-link font-mono">
+                                        #{{ h.in_ex.deal.id }}
+                                    </a>
+                                {% else %} — {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-gray-400 py-6 border border-gray-200">
+                                {% trans "История отсутствует" %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Пустое пространство снизу, чтобы нижнее меню не перекрывало -->
+                <div style="height: 150px;"></div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

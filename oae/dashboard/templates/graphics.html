@@ -1,0 +1,31 @@
+{% extends "unfold/layouts/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {{ media.css }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<ol class="breadcrumb">
+  <li><a href="{% url 'admin:index' %}">Главная</a></li>
+  <li><a href="{% url 'admin:dashboard_histogram_changelist' %}">Графики</a></li>
+</ol>
+{% endblock %}
+
+{% block content %}
+{{ media.js }}
+<div class="p-6">
+  <h1 class="text-2xl font-semibold mb-4">Количество сделок</h1>
+
+  {# Здесь ваш HTML/JS для отрисовки #}
+
+  <div class="chart__container"></div>
+  <script>
+    window.localStorage.setItem('chart', JSON.stringify({{ charts| safe}}));
+    console.log('hi bro !!!')
+  </script>
+  <script src="{% static 'dashboard/custom_dash.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix"></script>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "unfold/layouts/base.html" %}
+
+{% load i18n %}
+
+{% block breadcrumbs %}
+  {# при желании можно добавить хлебные крошки #}
+  <ol class="breadcrumb">
+    <li><a href="{% url 'admin:index' %}">{% trans "Главная" %}</a></li>
+    <li><a href="{% url 'admin:yourapp_mymodel_changelist' %}">{% trans "MyModel" %}</a></li>
+    <li class="active">{% trans "Отчёт" %}</li>
+  </ol>
+{% endblock %}
+
+{% block content %}
+  <div class="py-4">
+    <h2 class="text-xl font-semibold mb-4">{{ title }}</h2>
+    {# ваш контент: таблицы, формы, графики… #}
+    <p>Здесь будет отчёт по пользователям.</p>
+  </div>
+{% endblock %}

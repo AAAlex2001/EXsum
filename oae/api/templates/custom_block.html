@@ -1,0 +1,10 @@
+{% if custom_links %}
+  <div class="unfold-custom-block mt-4 border-t pt-2">
+    {% for item in custom_links %}
+      <a href="{{ item.url }}" 
+         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        {{ item.name }}
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}

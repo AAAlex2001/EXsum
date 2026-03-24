@@ -1,0 +1,182 @@
+{% extends "admin/change_list.html" %}
+
+{% load static %}
+{% block content %}
+
+  <div class="custom-bills">
+      {% if not blocked %}
+        <ul class="course-list">
+            {% for duty in courses %}
+                <li class="course-item">
+                    <div class="course-name">{{ duty.name }}</div>
+                    <div class="course-value">{{ duty.value|floatformat:3 }}</div>
+                    <div>{{ duty.variation}}</div>
+                </li>
+            {% empty %}
+                <li>Нет курсов.</li>
+            {% endfor %}
+        </ul>
+        <br>
+          <ul class="bills__conrainer"
+    style="display:flex; flex-wrap:wrap; gap:16px;">
+
+    {% for bill in bills %}
+        <li class="bills__item"
+            style="
+                {% if forloop.counter <= 2 %}
+                    border:2px solid #2ecc71;
+                {% endif %}
+            "
+        >
+            <a href="{% url 'admin:catalog_bill_change' bill.id %}"
+           style="text-decoration:none; color:inherit; display:block;">
+            <div class="bills__item-title">
+                {{ bill.name }}
+            </div>
+
+            <div class="bills__item-price">
+                {{ bill.remainder|floatformat:3 }}
+                {% if bill.currency.short_name == 'USDT' %} ₮
+                {% elif bill.currency.short_name == 'USD' %} $
+                {% else %} ₽
+                {% endif %}
+            </div>
+
+            <div class="bills__item-exchenge-rate">
+                {{ bill.currency.rate|floatformat:3 }}
+            </div>
+            </a>
+        </li>
+              {% if forloop.counter == 2 %}
+                    <br>
+                {% endif %}
+    {% empty %}
+        <li>Нет счетов для отображения.</li>
+    {% endfor %}
+</ul>
+
+        <div class="duty__container">
+            <div class="duty__common-container">
+                <p class="duty__common-title">Общий долг</p>
+                <p class="duty__common-desc">{{dutys_all}}</p>
+            </div>
+            <br>
+            <div class="duty__common-container">
+                <p class="duty__common-title">Общий баланс ликвидности по себестоимости</p>
+                <p class="duty__common-desc">{{bills_amount}}</p>
+            </div>
+            <br>
+            {% if is_admin %}
+            <div class="duty__common-container">
+                <p class="duty__common-title">Общий баланс ликвидности по рынку</p>
+                <p class="duty__common-desc">{{bills_amount_admin}}</p>
+            </div>
+            <br>
+            <div class="duty__common-container">
+                <p class="duty__common-title">Разница</p>
+                <p class="duty__common-desc">{{bills_amount_dif}}</p>
+            </div>
+            <br>
+            <div class="duty__common-container">
+                <p class="duty__common-title">Суммма всех моих обязательств в USDT</p>
+                <p class="duty__common-desc">{{sum_obligation}}</p>
+            </div>
+            <br>
+            <div class="duty__common-container">
+                <p class="duty__common-title">Общее количество USDT на счетах</p>
+                <p class="duty__common-desc">{{sum_usdt}}</p>
+            </div>
+            <br>
+            <div class="duty__common-container">
+                <p class="duty__common-title">Свободные USDT</p>
+                <p class="duty__common-desc">{{free_usdt}}</p>
+            </div>
+            <br>
+            {% endif %}
+            <ul class="contractors__conrainer-items">
+                {% for duty in dutys %}
+                    <li class="contractor__item">
+                        <div class="contractor__item-title">{{ duty.name }}</div>
+                        <div class="contractor__item-desc">
+                            <span>{{ duty.duty|floatformat:3 }} ₽</span>
+                        </div>
+                        <div class="contractor__item-desc">
+                            <span>{{ duty.duty_usdt|floatformat:3 }} ₮</span>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li>Нет долгов для отображения.</li>
+                {% endfor %}
+            </ul>
+        </div>
+      {% else %}
+        <ul class="course-list">
+            {% for duty in courses %}
+                <li class="course-item">
+                    <div class="course-name">{{ duty.name }}</div>
+                    <div class="course-value">{{ duty.value|floatformat:3 }}</div>
+                </li>
+            {% empty %}
+                <li>Нет курсов.</li>
+            {% endfor %}
+        </ul>
+        <br>
+        <ul class="bills__conrainer">
+              {% for bill in bills %}
+                  <li class="bills__item">
+                    <div class="bills__item-title">
+                        {{ bill.name }}
+                    </div>
+                    <div class="bills__item-price">
+                        {{bill.remainder|floatformat:3}} {% if bill.currency.short_name == "USDT" %} ₮ {% elif bill.currency.short_name == "USD" %} $ {% else %} ₽ {% endif %}
+                    </div>
+                  </li>
+              {% empty %}
+                  <li>Нет счетов для отображения.</li>
+              {% endfor %}
+          </ul>
+
+      <div class="duty__container">
+            <div class="duty__common-container">
+                <p class="duty__common-title">Общий долг</p>
+                <p class="duty__common-desc">{{dutys_all}}</p>
+            </div>
+            <br>
+            <ul class="contractors__conrainer-items">
+                {% for duty in dutys %}
+                    <li class="contractor__item">
+                        <div class="contractor__item-title"> {{ duty.name }} </div>
+                        <div class="contractor__item-desc"> {{duty.duty|floatformat:3}} </div>
+                    </li>
+                {% empty %}
+                    <li>Нет долгов для отображения.</li>
+                {% endfor %}
+            </ul>
+        </div>
+      {% endif %}
+  </div>
+  {{ block.super }}
+{% endblock %}
+
+{% block result_list %}
+  {{ in_exes|json_script:"in-exes-data" }}
+
+  {{ block.super }}
+
+  <script>
+    const inExes = JSON.parse(document.getElementById('in-exes-data').textContent);
+    window.localStorage.setItem('in_exes', document.getElementById('in-exes-data').textContent)
+    const customData = JSON.parse('{{ color_data|escapejs }}');
+    const listRows = document.querySelectorAll('#result_list>tbody');
+    listRows.forEach(el=>{
+        const code = el.querySelector('th>a').textContent;
+        for(const key of customData){
+            if(+key.id === +code){
+                el.querySelector('tr').style = `background: ${key.custom}`
+            }
+        }        
+    })
+  </script>
+  <script src="{% static 'operation/custom_admin.js' %}"></script>
+
+{% endblock %}

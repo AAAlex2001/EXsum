@@ -1,0 +1,776 @@
+:root{
+  --color-table:  #101827;
+}
+@media (min-width: 1920px) {
+  .container{
+    max-width: 100%;
+  }
+  
+}
+#content{
+  position: relative;
+}
+#content>div{
+  border: 0;
+}
+.main-order__title{
+  position: absolute;
+  top: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #101827;
+}
+#main > div:nth-child(2) > div{
+  margin-bottom: 0;
+}
+#content > div > ul > li{
+  border-radius: 9999px;
+}
+#content > div > ul > li:first-child{
+  margin-right: 5px;
+}
+/* Перекрашиваем все ссылки в списке записей админки в зелёный */
+.change-list .results table th a,
+.change-list .results table td a {
+  color: green !important;
+}
+/* костомные вкладки */
+.customTab__container{
+  position: relative;
+  display: flex;
+}
+[data-form-tab="form-tab"]{
+  display: none;
+}
+[data-form-tab].active {
+  display: block;
+  border: none;
+  box-shadow: none;
+}
+
+.data-form-tab__title{
+  width: 100%;
+  padding: 12px 0;
+  border-bottom: 1px solid #D7DBE4;
+}
+.customTab {
+  background: transparent;
+  position: relative;
+  max-width: 165px;
+  min-width: 165px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  margin: 0;
+  border-bottom: 1px solid #B7BBC4;
+  margin-bottom: 15px;
+}
+.customTab.active {
+  border-bottom: 3px solid #059669;
+}
+.customTab.active > h2{
+  color: #059669;
+  font-weight: 600;
+  background-color: transparent;
+  font-size: 14px;
+}
+.customTab > h2 {
+  background-color: transparent;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  color: #B7BBC4;
+}
+.data-form-tab__first-subform-container{
+  display: grid;
+  gap: 20px;
+  background-color: #F8F8F8;
+  border-radius: 20px;
+  padding: 12px 12px 24px;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-areas:  'title-common title-common title-common title-common title-common title-common title-common title-common title-common title-common title-common title-common '
+                        'date date date time time time switch . . . . .'
+                        'category category category category category category contractor contractor contractor contractor contractor contractor'
+                        'dds dds dds dds dds dds comment comment comment comment comment comment '
+                        'field-rate field-rate field-rate field-rate field-duty_deal field-duty_deal field-duty_deal field-duty_deal field-national_currency field-national_currency field-national_currency field-national_currency'
+                        'field-deal_1c field-deal_1c field-deal_1c field-deal_1c field-deal_1c field-deal_1c . . . . . .'
+                        ;
+                      }
+
+.data-form-tab__remove-container-contractor,
+.data-form-tab__remove-container{
+  display:flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.data-form-tab__add-table{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding: 0;
+}
+.data-form-tab__add-table>td{
+  width: 100%;
+  padding: 0;
+}
+.data-form-tab__add-table>td>a{
+  width: 100%;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+.field-category>div>div>div>select,
+.field-contractor>div>div>div>select,
+.field-cashflow>div>div>div>select,
+.field-comment>div>input,
+.field-rate>div>input,
+.field-duty_deal>div>input,
+.field-national_currency>div>input,
+.sum-deal>div>input,
+.income-rate>div>input,
+.income-account>div>div>div>select,
+.expence-amount>div>input,
+.expence-rate>div>input,
+.expense-account>div>div>div>select,
+.field-deal_1c>div>input,
+.comission>div>input,
+
+.name-contractor>div>div>div>select,
+.dept-operation>div>input,
+.procent-operation>div>input,
+.type-operation>div>select,
+.currency-operation>div>div>div>select,
+.comment-operation>div>input{
+  max-width: 100%;
+  border-radius: 12px;
+
+}
+.data-form-tab__first-contragent-subform-container{
+  display: grid;
+  gap: 20px;
+  background-color: transparent;
+  border-radius: 20px;
+  padding: 12px 0px 24px;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-areas: 'name-contractor name-contractor name-contractor . . . . . . . . .';
+}
+.field-closed {
+  /* justify-self: center;
+  align-self: center; */
+  padding-top: 30px;
+}
+.field-closed > div{
+    position: relative;
+    flex-direction: row-reverse;
+    gap: 10px;
+}
+.data-form-tab__container-date{
+  display: flex;
+  flex-direction: column;
+}
+
+.data-form-tab__label-date{
+  font-size: 12px;
+  font-weight: 500;
+  color: #1E1E1E;
+}
+.data-form-tab__date-cont{
+  display: flex;
+  gap: 15px;
+  position: relative;
+}
+
+.data-form-tab__date-input-cont > input{
+  min-width: 265px;
+  max-width: 315px;
+  border-radius: 12px;
+  width: 100%;
+}
+.data-form-tab__date-input-cont{
+  position: relative;
+
+}
+.data-form-tab__date-input-cont::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-color: #fff;
+  right: 5px;
+  top: 5px;
+}
+.data-form-tab__date-celender-cont,
+.data-form-tab__date-time-cont{
+  min-width: 46px;
+  max-width: 46px;
+  border-radius: 12px;
+  border: 1px solid #D7DBE4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.timezonewarning{
+  top: 20px;
+  right: 50%;
+}
+.data-form-tab__date-warm{
+  position: relative;
+  height: 50px;
+  color: #FF5E5E;
+  max-width: 205px; 
+}
+.data-form-tab__date-warm::before{
+  content: "warning";
+  color: #FF5E5E;    
+  cursor: pointer;
+  font-family: Material Symbols Outlined;
+  font-size: 18px;
+  margin-right: 5px;
+  top: 4px;
+  position: relative;
+}
+
+
+#result_list>tbody>tr{
+  color: var(--color-table);
+}
+/* #result_list>tbody>tr:hover{
+  cursor: pointer;
+  color: #1018276a;
+} */
+ .course-list__container,
+ .bills__container{
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #DEE2EA;
+  border-radius: 12px;
+  overflow: hidden;
+ }
+ .course-list__container-title,
+ .bills__container__container-title{
+   width: 100%;
+   background-color: #f8f8f8 ;
+   padding: 5px 12px;
+  }
+  .course-list__container-title > p,
+  .bills__container__container-title > p{
+    color: #5E6773;
+    font-size: 12px;
+    font-style: italic;
+    font-weight: 300;
+  }
+.course-list {
+    display: flex;
+    /* flex-wrap: wrap;            */
+    justify-content: space-between; 
+    list-style: none;
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+    width: 100%;
+    background-color: #fff;
+    padding: 9px 0;
+}
+
+.course-item {  
+    display: flex;
+    flex-direction: row; 
+    width: 100%;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 8px;       
+    font-size: 0.9rem;     
+}
+.course-item:not(:last-child) {
+    border-right: 1px solid #ccc;
+}
+
+.course-name {
+    font-weight: 500;  
+    font-size: 14px;         
+    color: #5E6773;
+}
+
+.course-value {
+    font-weight: 600;        
+    font-size: 16px;
+    color: #101827;
+}
+.course-cont-price{
+  display: flex;
+  gap: 5px;
+}
+.course-desciption-down {
+  width: 42px;
+  height: 20px;
+  border-radius: 4px;
+  background-color: #FFEAEA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  gap: 8px;
+}
+
+.course-desciption-up {
+  width: 42px;
+  height: 20px;
+  border-radius: 4px;
+  background-color: #DAFEF3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  gap: 8px;
+}
+.course-porcent{
+
+}
+.custom-bills{
+  margin: 20px 0;
+}
+.custom-bills__container-side{
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 16px;
+}
+.custom-bills__create>p{
+  color: #101827;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 13px;
+}
+.bills__wrap,
+.bills__wrap > a{
+  /* display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 174px));
+  grid-template-rows: auto;
+  gap: 8px; */
+  display: flex;
+  flex-direction: column;
+}
+.bills__wrap-info{
+  display: flex;
+  justify-content: space-between;
+}
+.bills__item-container-price{
+  display: flex;
+  gap: 20px;
+}
+.bills__item{
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  border-bottom: 1px solid #dee2ea;
+  padding: 10px;
+
+}
+.bills__item-title{
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 12px;
+  color: #5E6773  ;
+  text-transform: uppercase;
+}
+
+.bills__item-price{
+  font-family: Inter;
+  font-weight: 600;
+  font-size: 14px;
+  color: #101827;
+}
+
+.bills__item-exchenge-rate{
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 12px;
+  color: #079669;
+}
+/* checkbox list  */
+.checked\:bg-primary-600:checked{
+  background-color: #000;
+}
+.checked\:dark\:bg-primary-600:is(.dark *):checked {
+  --tw-bg-opacity: 1;
+  background-color: #fff
+}
+.checked\:border-primary-600:checked{
+  border-color: #000;
+}
+.checked\:dark\:border-primary-600:is(.dark *):checked{
+  border-color: #fff;
+
+}
+.checked\:hover\:border-primary-600:hover:checked{
+  border-color: #000
+}
+.after\:text-white:after {
+  color: #fff
+}
+.dark\:after\:checked\:text-white:checked:is(.dark *):after{
+  color: #000;
+}
+.after\:\!text-sm:after{
+  font-size: none;
+}
+.focus\:outline-primary-500:focus{
+  outline-color: #000;
+}
+
+.duty__container{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+
+}
+.duty__common-container{
+  position: relative;
+  width: 100%;
+  padding: 15px 20px;
+  border-radius: 20px;
+  border: 1px solid #B7BBC4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.duty__common-title{
+  color: #5E6773;
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 12px;
+}
+.duty__common-desc,
+.contractor__item-desc{
+  color: #101827;
+  font-family: Inter;
+  font-weight: 600;
+  font-size: 14px;
+}
+.contractors__container{
+  overflow: hidden;
+  position: relative;
+}
+.contractors__container-items{
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+}
+
+.contractor__item {
+  flex: 0 0 220px;           /* фиксированная ширина карточки */
+  display: flex;
+  flex-direction: column;     /* имя сверху, цифры под ним */
+  align-items: flex-start;
+  border: 1px solid #DEE2EA; /* ОБВОДКА */
+  border-radius: 12px;        /* скругление */
+  overflow: hidden;
+}
+
+.contractor__item-header{
+  display: flex;
+  justify-content: space-between;
+  background-color: #F8F8F8;
+  width: 100%;
+  padding: 6px 12px;
+}
+.contractor__item-header-title{
+  color: #101827;
+  font-size: 12px;
+  font-weight: 600;
+}
+.contractor__item-header-desc{
+  color:#5E6773;
+  font-size: 12px;
+  font-style: italic;
+}
+.contractor__item-body{
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+.contractor__item-body-wrap{
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.contractor__item-body-title{
+  color: #5E6773;
+  font-size: 12px;
+  font-weight: 500;
+}
+.contractor__item-body-desc{
+  color: #101827;
+  font-size: 12px;
+  font-weight: 600;
+}
+[data-label="Дата"]> .js-toggle {
+  position: relative;
+}
+[data-label="Дата"]> .js-toggle:hover{
+  cursor: pointer;
+}
+
+.js-toggle:hover::after {
+  position: absolute;
+  left: 0;
+  content: attr(data-original);
+}
+
+@media (max-width: 992px) {
+  .contractors__container-items{
+    flex-direction: column;
+  }
+}
+@media (max-width: 1024px) {
+ [data-label="Дата"]{
+  min-height: 50px;
+ }
+}
+
+.modal__container{
+  position: absolute;
+  border: 1px solid #000;
+  border-radius: 7px;
+  padding: 7px;
+  background-color: #6d6969;
+  text-wrap: nowrap;
+  color: #fff;
+  top: -55px;
+  left: 30px;
+  z-index: 9999;
+  :last-child{
+    color: rgb(234, 172, 131);
+  }
+}
+.modal__container--list{
+  position: absolute;
+  border: 1px solid #000;
+  border-radius: 7px;
+  padding: 7px;
+  background-color: #6d6969;
+  text-wrap: nowrap;
+  color: #fff;
+  top: -40px;
+  left: 30px;
+  z-index: 9999;
+  :last-child{
+    color: rgb(234, 172, 131);
+  }
+}
+
+button[name="_save"][disabled],
+button[name="_save"]:disabled,
+button[name="_continue"][disabled],
+button[name="_continue"]:disabled,
+button[name="_addanother"][disabled],
+button[name="_addanother"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: brightness(80%);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+input[data-require="required"] {
+  border: 1px solid #0091ff !important;
+}
+
+/* bills_one */
+
+.custom-bills__create {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.bills__create-wrap{
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+.bills__create-item{
+  width: 100%;
+  max-width: 265px;
+  min-width: 265px;
+  padding: 12px;
+  background-color: #F8F8F8;
+  border-radius: 20px !important;
+}
+.bills__create-item-title{
+  color: #B7BBC4;
+  font-weight: 500;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.bills__create-item-price{
+  color: #101827;
+  font-weight: 600;
+  font-size: 18px;
+}
+.bills__creare-item-exchenge-rate{
+  color: #079669;
+  font-weight: 500;
+  font-size: 12px;
+}
+/* incomes expose */
+#deal_data-group,
+#debt_operations-group > div > fieldset > div,
+#debt_operations-group > div > fieldset > div > div > div > div > div > div > table,
+#deal_data-group > div > fieldset > div,
+#deal_data-group > div > fieldset > div > div > div > div > div > div > table{
+  border: none;
+  box-shadow: none;
+}
+.custom__remove-border,
+.custom__remove-border > tr{
+  border: none;
+  background-color: transparent !important;
+}
+
+.data-form-tab__secend-contractor-subform-container,
+.data-form-tab__secend-subform-container{
+  border-radius: 20px;
+  padding: 12px 12px 24px;
+  margin-top: 16px;
+  margin-bottom: 66px;
+  background-color: #F8F8F8;
+  display: block;
+  position: relative;
+}
+
+
+.data-form-tab__secend-contractor-subform-container:not(:last-child){
+  margin-top: 75px;
+  margin-bottom: 120px;
+}
+/* ---------------secend sub form */
+.data-form-tab__secend-subform-container > tr{
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-areas:
+    'title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec title-common-sec'
+    'sum-deal sum-deal sum-deal sum-deal income-rate income-rate income-rate income-rate income-account income-account income-account income-account'
+    'expence-amount expence-amount expence-amount expence-amount expence-rate expence-rate expence-rate expence-rate expense-account expense-account expense-account expense-account'
+    'comission comission comission comission comission comission comission comission comission comission comission comission '
+    ;
+}
+/* constractor */
+.data-form-tab__secend-contractor-subform-container > tr{
+  display: grid;
+  gap: 20px;
+  border: none;
+  box-shadow: none;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 15px auto auto auto;
+  grid-template-areas:  
+  'contractor contractor contractor contractor contractor-balance contractor-balance contractor-balance contractor-balance contractor-balance contractor-balance contractor-balance contractor-balance'
+  /* 'title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent title-contragent ' */
+  'dept-operation dept-operation dept-operation dept-operation dept-operation dept-operation type-operation type-operation type-operation type-operation type-operation type-operation'
+  'procent-operation procent-operation procent-operation procent-operation procent-operation procent-operation currency-operation currency-operation currency-operation currency-operation currency-operation currency-operation'
+  'comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation comment-operation '
+  ;   
+}
+.data-form-tab__contractor-cont-balance,
+.data-form-tab__contractor-cont{
+  position: relative;
+  display: block;
+  top: -135px;
+  left: -10px;
+}
+.data-form-tab__contractor-cont-balance{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #F8F8F8;
+  min-width: 100%;
+  padding: 22px;
+  border-radius: 9999px;
+  top: -112px;
+  left: 10px;
+}
+.data-form-tab__remove::after{
+  content: "delete";
+  color: #FF5E5E;    
+  cursor: pointer;
+  font-family: Material Symbols Outlined;
+  font-size: 18px;
+  top: 0px;
+  margin-left: 3px;
+  position: relative;
+}
+.data-form-tab__remove{
+  position: absolute;
+  right: 0px;
+  bottom: -50px;
+  display: flex;  
+  align-items: center;
+  justify-content: center;
+  background-color: #FFEFEF;
+  border-radius: 9999px;
+  padding: 12px;
+  min-width: 108px;
+  min-height: 36px;
+}
+.data-form-tab__remove>div>a{
+  padding: 0;
+  margin: 0;
+}
+
+.data-form-tab__contractor-cont-balance-amount{
+  color: #101827;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+label,
+.data-form-tab__title-item{
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #1E1E1E !important;
+  margin-bottom: 6px !important;
+}
+
+.data-form-tab__contractor-cont-balance-title{
+  color: #AAAFB9;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+[name="debt_operations-0-operation_type"],
+[name="debt_operations-1-operation_type"],
+[name="debt_operations-2-operation_type"],
+[name="debt_operations-3-operation_type"],
+[name="debt_operations-4-operation_type"],
+[name="debt_operations-5-operation_type"],
+[name="debt_operations-6-operation_type"],
+[name="category"],
+[name="cashflow"],
+[type="number"],
+[type="text"],
+[data-context="available-source"],
+[name="contractor"] {
+  color: #AAAFB9;
+}
+
+#changelist-search >div{
+  border-radius: 9999px;
+}
+#content-main > div > div > div > div >a{
+  border-radius: 9999px;
+  display: flex;
+  flex-direction: row-reverse;
+}

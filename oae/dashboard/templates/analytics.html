@@ -1,0 +1,214 @@
+{% extends "unfold/layouts/base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<!-- Фильтры -->
+<div class="mb-6 flex flex-wrap gap-2 sm:gap-4">
+  <a href="?type=days"
+     class="px-4 py-2 sm:px-6 sm:py-2
+            {% if selected == 'days' %}
+              bg-primary-600 text-white hover:bg-primary-700
+            {% else %}
+              bg-gray-200 text-gray-700 hover:bg-gray-300
+            {% endif %}
+            font-semibold text-base rounded-full shadow-md transition-colors duration-200">
+    По дням
+  </a>
+
+  <a href="?type=months"
+     class="px-4 py-2 sm:px-6 sm:py-2
+            {% if selected == 'months' %}
+              bg-primary-600 text-white hover:bg-primary-700
+            {% else %}
+              bg-gray-200 text-gray-700 hover:bg-gray-300
+            {% endif %}
+            font-semibold text-base rounded-full shadow-md transition-colors duration-200">
+    По месяцам
+  </a>
+
+  <a href="?type=dds"
+     class="px-4 py-2 sm:px-6 sm:py-2
+            {% if selected == 'dds' %}
+              bg-primary-600 text-white hover:bg-primary-700
+            {% else %}
+              bg-gray-200 text-gray-700 hover:bg-gray-300
+            {% endif %}
+            font-semibold text-base rounded-full shadow-md transition-colors duration-200">
+    ДДС
+  </a>
+    <a href="?type=fifo"
+   class="px-4 py-2 sm:px-6 sm:py-2
+          {% if selected == 'fifo' %}
+            bg-primary-600 text-white hover:bg-primary-700
+          {% else %}
+            bg-gray-200 text-gray-700 hover:bg-gray-300
+          {% endif %}
+          font-semibold text-base rounded-full shadow-md transition-colors duration-200">
+  FIFO по долгам
+</a>
+    </a>
+    <a href="?type=metrics"
+   class="px-4 py-2 sm:px-6 sm:py-2
+          {% if selected == 'metrics' %}
+            bg-primary-600 text-white hover:bg-primary-700
+          {% else %}
+            bg-gray-200 text-gray-700 hover:bg-gray-300
+          {% endif %}
+          font-semibold text-base rounded-full shadow-md transition-colors duration-200">
+  Метрика
+</a>
+</div>
+
+{% if rows %}
+<!-- Таблица -->
+<div class="overflow-x-auto border border-gray-300 rounded-lg shadow-sm w-full mb-8">
+  <table class="min-w-full border border-gray-300 text-sm table-auto">
+    <thead class="bg-gray-50">
+      <tr class="border-b border-gray-300">
+        {% for col in columns %}
+          <th class="px-4 py-2 text-left font-medium uppercase tracking-wide text-gray-600 border-r border-gray-300">
+            {{ col }}
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody class="bg-white">
+      {% for row in rows %}
+        <tr class="border-b border-gray-200 hover:bg-gray-50">
+          {% for cell in row %}
+            <td class="px-4 py-2 break-words text-gray-700 border-r border-gray-200 max-w-[200px]">
+              {% if cell in highlight_words %}
+                <strong>{{ cell }}</strong>
+              {% else %}
+                {{ cell }}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Передаём сериализованные данные для графика -->
+<script id="rows-data" type="application/json">{{ rows_for_chart_json|safe }}</script>
+
+<!-- Кнопки графика -->
+<div class="flex flex-wrap gap-2 mb-4">
+  <button id="btn-line" onclick="updateChartType('line')"
+          class="chart-btn px-4 py-2 rounded-full font-medium bg-blue-500 text-white hover:bg-blue-600 transition">
+    Линейный график
+  </button>
+  <button id="btn-bar" onclick="updateChartType('bar')"
+          class="chart-btn px-4 py-2 rounded-full font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition">
+    Гистограмма
+  </button>
+</div>
+
+<!-- Контейнер для графика -->
+<div class="w-full overflow-x-auto">
+  <canvas id="revenueChart" class="w-full h-60 sm:h-80"></canvas>
+</div>
+
+<script>
+  Chart.register(ChartDataLabels);
+
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  const rowsData = JSON.parse(document.getElementById('rows-data').textContent);
+
+  const labels = rowsData.map(item => item[0]);
+  const dataValues = rowsData.map(item => item[1]);
+
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        color: '#111827',
+        font: { weight: '600', size: 11 },
+        formatter: (value) => value.toLocaleString('ru-RU', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        })
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#e5e7eb' } }
+    }
+  };
+
+  let currentChartType = 'line';
+
+  function createChartData(type) {
+    if(type === 'bar') {
+      return {
+        labels: labels,
+        datasets: [{
+          label: "{{ chart_label }}",
+          data: dataValues,
+          backgroundColor: 'rgba(59, 130, 246, 0.5)',
+          borderColor: '#3b82f6',
+          borderWidth: 1,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+        }]
+      };
+    } else {
+      return {
+        labels: labels,
+        datasets: [{
+          label: "{{ chart_label }}",
+          data: dataValues,
+          backgroundColor: 'rgba(59, 130, 246, 0.5)',
+          borderColor: '#3b82f6',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          pointBackgroundColor: '#3b82f6'
+        }]
+      };
+    }
+  }
+
+  let chart = new Chart(ctx, {
+    type: currentChartType,
+    data: createChartData(currentChartType),
+    options: commonOptions
+  });
+
+  function updateActiveButton(type) {
+    document.querySelectorAll('.chart-btn').forEach(btn => {
+      btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+      btn.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+    });
+    const activeBtn = document.getElementById('btn-' + type);
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+    activeBtn.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+  }
+
+  function updateChartType(type) {
+    if (type === currentChartType) return;
+    chart.destroy();
+    chart = new Chart(ctx, {
+      type: type,
+      data: createChartData(type),
+      options: commonOptions
+    });
+    currentChartType = type;
+    updateActiveButton(type);
+  }
+
+  updateActiveButton(currentChartType);
+</script>
+
+{% else %}
+<p class="text-center text-gray-500 italic">Ничего не выбрано.</p>
+{% endif %}
+{% endblock %}
