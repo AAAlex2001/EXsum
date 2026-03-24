@@ -369,14 +369,23 @@
     box-shadow: none !important;
   }
   #content-main .inline-related fieldset {
-    background: #F8F8F8 !important;
-    border-radius: 20px !important;
-    padding: 16px !important;
-    padding-bottom: 8px !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    padding-bottom: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
   }
   #content-main .inline-related fieldset > h2 { display: none !important; }
+
+  /* Каждый tbody = отдельная карточка */
+  #deal_data-group tbody:not(.empty-form),
+  #debt_operations-group tbody:not(.empty-form) {
+    background: #F8F8F8 !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    margin-bottom: 12px !important;
+  }
 
   /* Обход Alpine x-show */
   #deal_data-group,
@@ -432,6 +441,16 @@
   #debt_operations-group tbody.original ~ tbody.template {
     display: none !important;
   }
+  /* FOUC — скрываем 2+ tbody сразу через CSS (не ждём JS) */
+  #deal_data-group tbody:not(.empty-form) ~ tbody:not(.empty-form):not(.df-form-visible),
+  #debt_operations-group tbody:not(.empty-form) ~ tbody:not(.empty-form):not(.df-form-visible) {
+    display: none !important;
+  }
+  /* JS добавляет df-form-visible для новых форм */
+  #deal_data-group tbody.df-form-visible,
+  #debt_operations-group tbody.df-form-visible {
+    display: block !important;
+  }
 
   /* Tfoot и нативные кнопки — скрываем */
   #deal_data-group tfoot,
@@ -439,6 +458,7 @@
     display: none !important;
   }
   .df-form-hidden { display: none !important; }
+
   /* JS-кнопка добавления */
   .df-add-btn {
     display: inline-flex !important;
@@ -707,9 +727,6 @@
     flex: 3 1 0 !important;
   }
 
-  /* Скрытие нативных кнопок/иконок */
-  .object-tools { display: none !important; }
-
   .submit-row {
     width: 100% !important;
     max-width: 100% !important;
@@ -777,7 +794,11 @@
     background: #079669 !important;
     color: #FFFFFF !important;
   }
-  .dark #content-main .inline-related fieldset { background: #1F2937 !important; }
+  .dark #content-main .inline-related fieldset { background: transparent !important; }
+  .dark #deal_data-group tbody:not(.empty-form),
+  .dark #debt_operations-group tbody:not(.empty-form) {
+    background: #1F2937 !important;
+  }
   .dark #deal_data-group .form-row > td::before,
   .dark #debt_operations-group .form-row > td::before { color: #E5E7EB !important; }
   .dark .df-contractor-info { background: #1F2937; }
@@ -785,6 +806,9 @@
   .dark .df-contractor-info-value { color: #F9FAFB; }
 </style>
 {% endblock %}
+
+{% block object-tools %}{% endblock %}
+{% block object-tools-items %}{% endblock %}
 
 {% block content %}
   <input type="hidden" name="autocomplete" value="{{ autocomplete }}">
@@ -1005,14 +1029,12 @@
 
       function addSectionHeader(group, title) {
         if (!group) return;
-        var fs = group.querySelector('fieldset');
-        if (!fs) return;
+        var firstTbody = group.querySelector('tbody:not(.empty-form)');
+        if (!firstTbody) return;
         var el = document.createElement('div');
         el.className = 'df-section-hdr';
         el.innerHTML = '<span class="df-section-title">' + title + '</span><div class="df-section-line"></div>';
-        var target = fs.querySelector('.formset-wrapper') || fs.querySelector('[data-simplebar]') || fs.querySelector('table');
-        if (target) fs.insertBefore(el, target);
-        else fs.prepend(el);
+        firstTbody.insertBefore(el, firstTbody.firstChild);
       }
 
       addSectionHeader(ieGroup, '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430');
@@ -1072,21 +1094,21 @@
         });
       });
 
-      /* Скрытие лишних форм (extra) — показываем только 1 */
+      /* MutationObserver: новые формы после "Добавить" получают df-form-visible */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
-        var allBodies = g.querySelectorAll('tbody');
-        var visible = [];
-        allBodies.forEach(function(tb) {
-          if (tb.classList.contains('empty-form')) return;
-          if (tb.querySelector('.form-row')) visible.push(tb);
+        var table = g.querySelector('table');
+        if (!table) return;
+        var obs = new MutationObserver(function(muts) {
+          muts.forEach(function(m) {
+            m.addedNodes.forEach(function(node) {
+              if (node.nodeName === 'TBODY' && !node.classList.contains('empty-form')) {
+                node.classList.add('df-form-visible');
+              }
+            });
+          });
         });
-        console.log('[df] tbodies in', g.id, ':', allBodies.length, 'visible:', visible.length);
-        if (visible.length > 1) {
-          for (var i = 1; i < visible.length; i++) {
-            visible[i].classList.add('df-form-hidden');
-          }
-        }
+        obs.observe(table, { childList: true });
       });
 
       /* Переключение вкладок */
