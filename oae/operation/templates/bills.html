@@ -80,7 +80,7 @@
     white-space: nowrap;
   }
 
-  /* курсы + метрики + счета */
+  /* статистика */
   .pp-stats {
     display: flex;
     flex-direction: row;
@@ -242,7 +242,7 @@
     border: 1px solid #DEE2EA;
     border-radius: 12px;
   }
-  /* сетка метрик: 2 колонки */
+  /* метрики */
   .pp-metrics__card--c0 { left: 0; width: calc(50% - 4px); }
   .pp-metrics__card--c1 { left: calc(50% + 4px); width: calc(50% - 4px); }
   .pp-metrics__card--r0 { top: 0; }
@@ -560,57 +560,77 @@
     padding: 0;
   }
   .pp-carousel-arrow:hover { opacity: 0.7; }
-  .pp-carousel-arrow--right { right: 12px; }
-  .pp-carousel-arrow--left { left: 12px; opacity: 0; pointer-events: none; }
+  .pp-carousel-arrow--right { right: 0; }
+  .pp-carousel-arrow--left { left: 0; opacity: 0; pointer-events: none; }
   .pp-carousel-arrow--left svg { transform: rotate(180deg); }
 
-  /* ================================================
-     Таблица сделок — переопределяем unfold
-     ================================================ */
+  /* кнопка добавить */
+  .pp-btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #059669;
+    color: #fff;
+    border-radius: 9999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+    height: 32px;
+    white-space: nowrap;
+  }
+  .pp-btn-add:hover { background: #047857; }
+  .pp-btn-add span { color: #fff; }
 
-  /* #changelist — оставляем нативный -mx-4, только верхний отступ */
+  #main > .grow {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* changelist */
   #changelist {
     font-family: 'Inter', sans-serif;
-    padding-top: 16px !important;
-    padding-bottom: 0 !important;
+    margin: 0 !important;
+    padding: 16px 0 0 !important;
   }
-
-  /* .result-list-wrapper — оставляем нативный px-4, убираем gap */
   #changelist > .result-list-wrapper {
+    padding: 0 !important;
     gap: 0 !important;
   }
-
-  /* внутренний div (.grow.min-w-0) — основная колонка */
   #changelist > .result-list-wrapper > div:first-child {
     min-width: 0;
   }
 
-  /* search bar — div с lg:border lg:rounded-t-default
-     Делаем из него верхнюю часть карточки */
-  #changelist > .result-list-wrapper > div:first-child > div.flex.flex-col {
+  /* верх карточки */
+  #changelist > .result-list-wrapper > div:first-child > div.flex {
     border: 1px solid #E5E7EB !important;
     border-bottom: none !important;
-    border-radius: 12px 12px 0 0 !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
     background: #FFFFFF !important;
     margin: 0 !important;
-    padding: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 12px 16px !important;
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between;
     align-items: center;
-    height: 56px;
     gap: 8px;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
-  /* форма */
   #changelist-form {
     border: none !important;
     border-radius: 0 !important;
     background: #FFFFFF;
+    padding: 0 !important;
   }
 
-  /* simplebar-обёртка внутри формы — нижняя часть карточки */
+  /* низ карточки */
   #changelist-form > div[data-simplebar] {
     border: 1px solid #E5E7EB !important;
     border-top: none !important;
@@ -621,11 +641,12 @@
     background: #FFFFFF !important;
     overflow-x: auto !important;
   }
-
-  /* убираем дефолтные тени и рамки unfold (но не наши!) */
-  .result-list-wrapper .shadow-xs {
-    box-shadow: none !important;
+  #changelist-form > div[data-simplebar] .simplebar-content-wrapper,
+  #changelist-form > div[data-simplebar] .simplebar-content {
+    padding: 0 !important;
   }
+
+  .result-list-wrapper .shadow-xs { box-shadow: none !important; }
 
   /* поиск */
   #changelist-search {
@@ -667,10 +688,7 @@
     height: 100%;
     flex: 1;
   }
-  #searchbar::placeholder {
-    color: #B7BBC4;
-    font-weight: 500;
-  }
+  #searchbar::placeholder { color: #B7BBC4; font-weight: 500; }
   #searchbar-submit {
     display: flex;
     align-items: center;
@@ -681,12 +699,9 @@
     cursor: pointer;
     order: -1;
   }
-  #searchbar-submit .material-symbols-outlined {
-    font-size: 20px;
-    color: #4B5563;
-  }
+  #searchbar-submit .material-symbols-outlined { font-size: 20px; color: #4B5563; }
 
-  /* кнопка фильтров */
+  /* фильтры */
   #content-main > div > div > div > div > a {
     display: inline-flex !important;
     flex-direction: row-reverse;
@@ -706,30 +721,13 @@
     text-decoration: none;
     margin-right: 16px;
   }
-  #content-main > div > div > div > div > a:hover {
-    background: #F9FAFB;
-    color: #079669;
-  }
-  #content-main > div > div > div > div > a:hover .material-symbols-outlined {
-    color: #079669;
-  }
+  #content-main > div > div > div > div > a:hover { background: #F9FAFB; color: #079669; }
+  #content-main > div > div > div > div > a:hover .material-symbols-outlined { color: #079669; }
 
   /* таблица */
-  #result_list {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-    border: none !important;
-  }
-
-  /* шапка таблицы */
-  #result_list > thead {
-    display: table-header-group !important;
-    background: #F9FAFB;
-  }
-  #result_list > thead > tr {
-    height: 40px;
-  }
+  #result_list { width: 100%; border-collapse: collapse; border-spacing: 0; border: none !important; }
+  #result_list > thead { display: table-header-group !important; background: #F9FAFB; }
+  #result_list > thead > tr { height: 40px; }
   #result_list > thead > tr > th {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -741,55 +739,23 @@
     vertical-align: middle;
     text-align: left;
     border: none !important;
+    border-top: 1px solid #E5E7EB !important;
     border-bottom: 1px solid #E5E7EB !important;
     background: #F9FAFB;
     white-space: nowrap;
   }
-  #result_list > thead > tr > th div {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  #result_list > thead > tr > th a {
-    color: #101827 !important;
-    text-decoration: none;
-    font-weight: 600;
-  }
+  #result_list > thead > tr > th div { display: flex; align-items: center; gap: 6px; }
+  #result_list > thead > tr > th a { color: #101827 !important; text-decoration: none; font-weight: 600; }
+  #result_list > thead > tr > th .text-base-400 { font-size: 14px; color: #B7BBC4 !important; transition: color 0.15s; }
+  #result_list > thead > tr > th a:hover .text-base-400 { color: #079669 !important; }
+  #result_list > thead > tr > th > div > a[href="?"] .material-symbols-outlined { color: #B7BBC4 !important; transition: color 0.15s; }
+  #result_list > thead > tr > th > div > a[href="?"]:hover .material-symbols-outlined { color: #FF5E5E !important; }
+  #result_list > thead > tr > th:first-child { width: 40px; min-width: 40px; max-width: 40px; text-align: center; padding: 0 0 0 12px; }
 
-  /* иконки сортировки — серые, ховер: стрелка зелёная, крестик красный */
-  #result_list > thead > tr > th .text-base-400 {
-    font-size: 14px;
-    color: #B7BBC4 !important;
-    transition: color 0.15s;
-  }
-  #result_list > thead > tr > th a:hover .text-base-400 {
-    color: #079669 !important;
-  }
-  /* кнопка отмены сортировки (крестик) */
-  #result_list > thead > tr > th > div > a[href="?"] .material-symbols-outlined,
-  #result_list > thead > tr > th > div > a.cancel-sort .material-symbols-outlined {
-    color: #B7BBC4 !important;
-    transition: color 0.15s;
-  }
-  #result_list > thead > tr > th > div > a[href="?"]:hover .material-symbols-outlined,
-  #result_list > thead > tr > th > div > a.cancel-sort:hover .material-symbols-outlined {
-    color: #FF5E5E !important;
-  }
-
-  /* чекбокс в шапке */
-  #result_list > thead > tr > th:first-child {
-    width: 40px;
-    min-width: 40px;
-    max-width: 40px;
-    text-align: center;
-    padding: 0 0 0 12px;
-  }
-
-  /* минимальные ширины колонок (не фиксированные — тянутся!) */
   #result_list > thead > tr > th:nth-child(2) { min-width: 98px; }   /* ID */
   #result_list > thead > tr > th:nth-child(3) { min-width: 91px; }   /* Дата */
-  #result_list > thead > tr > th:nth-child(4) { min-width: 182px; }  /* Счет прихода/сумма */
-  #result_list > thead > tr > th:nth-child(5) { min-width: 182px; }  /* Счет расхода/сумма */
+  #result_list > thead > tr > th:nth-child(4) { min-width: 182px; }  /* Счет прихода */
+  #result_list > thead > tr > th:nth-child(5) { min-width: 182px; }  /* Счет расхода */
   #result_list > thead > tr > th:nth-child(6) { min-width: 77px; }   /* Доход */
   #result_list > thead > tr > th:nth-child(7) { min-width: 93px; }   /* Процент */
   #result_list > thead > tr > th:nth-child(8) { min-width: 88px; }   /* Курс до */
@@ -798,13 +764,7 @@
   #result_list > thead > tr > th:nth-child(11) { min-width: 112px; } /* Контрагент */
   #result_list > thead > tr > th:nth-child(12) { min-width: 129px; } /* Комментарий */
 
-  /* строки данных */
-  #result_list > tbody {
-    display: table-row-group;
-    background: transparent !important;
-    border: none !important;
-    margin: 0 !important;
-  }
+  #result_list > tbody { display: table-row-group; background: transparent !important; border: none !important; margin: 0 !important; }
   #result_list > tbody > tr {
     height: 40px;
     border: none !important;
@@ -813,9 +773,7 @@
     display: table-row !important;
     border-radius: 0 !important;
   }
-  #result_list > tbody:last-child > tr {
-    border-bottom: none !important;
-  }
+  #result_list > tbody:last-child > tr { border-bottom: none !important; }
   #result_list > tbody > tr > th,
   #result_list > tbody > tr > td {
     font-family: 'Inter', sans-serif;
@@ -834,42 +792,108 @@
     display: table-cell !important;
   }
   #result_list > tbody > tr > th a,
-  #result_list > tbody > tr > td a {
-    color: #101827 !important;
-    text-decoration: none;
-  }
-
-  /* чекбокс в строках */
+  #result_list > tbody > tr > td a { color: #101827 !important; text-decoration: none; }
   #result_list > tbody > tr > td:first-child,
-  #result_list > tbody > tr > th:first-child {
-    width: 40px;
-    min-width: 40px;
-    max-width: 40px;
-    text-align: center;
-    padding: 0 0 0 12px;
-  }
-
-  /* uppercase для столбцов счетов */
+  #result_list > tbody > tr > th:first-child { width: 40px; min-width: 40px; max-width: 40px; text-align: center; padding: 0 0 0 12px; }
   #result_list > tbody > tr > td[data-label="Счет прихода"],
   #result_list > tbody > tr > td[data-label="Счет расхода"],
   #result_list > tbody > tr > th[data-label="Счет прихода"],
-  #result_list > tbody > tr > th[data-label="Счет расхода"] {
-    text-transform: uppercase;
-  }
-
-  /* убираем unfold-мобильные before-лейблы */
+  #result_list > tbody > tr > th[data-label="Счет расхода"] { text-transform: uppercase; }
   #result_list > tbody > tr > th::before,
-  #result_list > tbody > tr > td::before {
-    display: none !important;
-  }
+  #result_list > tbody > tr > td::before { display: none !important; }
 
-  /* пагинация */
   #changelist .paginator,
-  #content > div > ul {
-    padding: 12px 16px;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
+  #content > div > ul { padding: 12px 16px; font-family: 'Inter', sans-serif; font-size: 14px; }
+
+  /* черная тема */
+  .dark .pp-wrap { color: #E5E7EB; }
+  .dark .pp-title-bar__text { color: #F9FAFB; }
+  .dark .pp-btn { background: #1F2937; border-color: #374151; }
+  .dark .pp-btn__label span { color: #D1D5DB; }
+  .dark .pp-btn__icon svg path { stroke: #9CA3AF; }
+  .dark .pp-btn:hover { background: #374151; }
+  .dark .pp-btn:hover .pp-btn__label span { color: #079669; }
+  .dark .pp-btn:hover .pp-btn__icon svg path { stroke: #079669; }
+
+  .dark .pp-courses { border-color: #374151; }
+  .dark .pp-courses__header { background: #1F2937; }
+  .dark .pp-courses__header-text { color: #9CA3AF; }
+  .dark .pp-courses__divider { border-color: #374151; }
+  .dark .pp-courses__name { color: #9CA3AF; }
+  .dark .pp-courses__rate { color: #F9FAFB; }
+
+  .dark .pp-metrics__card { border-color: #374151; background: transparent; }
+  .dark .pp-metrics__card-label { color: #9CA3AF; }
+  .dark .pp-metrics__card-value { color: #F9FAFB; }
+
+  .dark .pp-accounts { border-color: #374151; }
+  .dark .pp-accounts__header { background: #1F2937; }
+  .dark .pp-accounts__header-text { color: #9CA3AF; }
+  .dark .pp-accounts__divider { border-color: #374151; }
+  .dark .pp-accounts__name { color: #9CA3AF; }
+  .dark .pp-accounts__amount { color: #F9FAFB; }
+  .dark .pp-accounts__rate { color: #079669; }
+
+  .dark .pp-carousel__card { border-color: #374151; }
+  .dark .pp-carousel__card-header { background: #1F2937; }
+  .dark .pp-carousel__card-name { color: #F9FAFB; }
+  .dark .pp-carousel__card-subtitle { color: #9CA3AF; }
+  .dark .pp-carousel__card-label { color: #9CA3AF; }
+  .dark .pp-carousel__card-val { color: #F9FAFB; }
+
+  .dark .pp-carousel-fade-right { background: linear-gradient(270deg, #111827 0%, rgba(17,24,39,0) 100%) !important; }
+  .dark .pp-carousel-fade-left { background: linear-gradient(90deg, #111827 0%, rgba(17,24,39,0) 100%) !important; }
+  .dark .pp-carousel-arrow svg path { fill: #E5E7EB; }
+
+  .dark #changelist > .result-list-wrapper > div:first-child > div.flex.flex-col {
+    border-color: #374151 !important;
+    background: #1F2937 !important;
   }
+  .dark #changelist-search > div {
+    border-color: #374151 !important;
+    background: #111827 !important;
+  }
+  .dark #searchbar { color: #F9FAFB; }
+  .dark #searchbar::placeholder { color: #6B7280; }
+  .dark #searchbar-submit .material-symbols-outlined { color: #9CA3AF; }
+  .dark #content-main > div > div > div > div > a {
+    border-color: #374151;
+    background: #1F2937;
+    color: #D1D5DB;
+  }
+  .dark #content-main > div > div > div > div > a:hover { background: #374151; color: #079669; }
+
+  /* dark: таблица */
+  .dark #changelist-form { background: transparent !important; }
+  .dark #changelist > .result-list-wrapper > div:first-child > div.flex {
+    border-color: #374151 !important;
+    background: #1F2937 !important;
+  }
+  .dark #changelist-form > div[data-simplebar] {
+    border-color: #374151 !important;
+    background: transparent !important;
+  }
+  .dark #result_list { background: transparent !important; }
+  .dark #result_list > thead { background: #1F2937 !important; }
+  .dark #result_list > thead > tr > th {
+    background: #1F2937 !important;
+    color: #F9FAFB !important;
+    border-top-color: #374151 !important;
+    border-bottom-color: #374151 !important;
+  }
+  .dark #result_list > thead > tr > th a { color: #F9FAFB !important; }
+  .dark #result_list > tbody > tr {
+    border-bottom-color: #374151 !important;
+  }
+  .dark #result_list > tbody > tr > th,
+  .dark #result_list > tbody > tr > td {
+    color: #E5E7EB !important;
+  }
+  .dark #result_list > tbody > tr > th a,
+  .dark #result_list > tbody > tr > td a { color: #E5E7EB !important; }
+  .dark #result_list > tbody > tr > td a:hover { color: #079669 !important; }
+  .dark #changelist .paginator { color: #9CA3AF; }
+  .dark #content-main > div > div > div > div > a .material-symbols-outlined { color: #9CA3AF; }
 </style>
 {% endblock %}
 
@@ -879,7 +903,15 @@
 
   {# шапка #}
   <div class="pp-title-bar">
-    <span class="pp-title-bar__text">Сделки</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="pp-title-bar__text">Сделки</span>
+      <a href="add/" class="pp-btn-add">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 1V13M1 7H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Добавить</span>
+      </a>
+    </div>
     <div class="pp-title-bar__actions">
       <button class="pp-btn" onclick="location.href='?recount=1'" type="button">
         <span class="pp-btn__icon">
