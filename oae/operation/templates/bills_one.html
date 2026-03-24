@@ -473,11 +473,7 @@
     display: none !important;
   }
 
-  /* Tfoot — скрываем оригинал, кнопка через JS */
-  #deal_data-group tfoot,
-  #debt_operations-group tfoot {
-    display: none !important;
-  }
+  /* Tfoot — скрываем через JS после извлечения ссылки */
   /* JS-кнопка добавления */
   .df-add-btn {
     display: inline-flex !important;
@@ -1100,18 +1096,32 @@
       /* Кнопки "Добавить" — выносим за пределы карточки */
       function createAddButton(group, label) {
         if (!group) return;
-        var tfootLink = group.querySelector('tfoot a');
-        if (!tfootLink) {
-          console.log('[df] no tfoot link in', group.id);
+        var origLink = group.querySelector('tfoot a.add-row')
+          || group.querySelector('tfoot a')
+          || group.querySelector('a.add-row')
+          || group.querySelector('.add-row a');
+        if (!origLink) {
+          var allLinks = group.querySelectorAll('a');
+          for (var i = 0; i < allLinks.length; i++) {
+            if (/добавить|add another/i.test(allLinks[i].textContent)) {
+              origLink = allLinks[i]; break;
+            }
+          }
+        }
+        console.log('[df] addLink for', group.id, ':', !!origLink, origLink ? origLink.className : '-');
+        if (!origLink) {
+          console.log('[df] no add link. tfoot:', group.querySelectorAll('tfoot').length, 'a:', group.querySelectorAll('a').length);
           return;
         }
+        var origParent = origLink.closest('tfoot') || origLink.closest('.add-row')?.parentElement || origLink.parentElement;
+        if (origParent && origParent !== group) origParent.style.display = 'none';
         var btn = document.createElement('a');
         btn.href = '#';
         btn.className = 'df-add-btn';
         btn.textContent = label;
         btn.addEventListener('click', function(e) {
           e.preventDefault();
-          tfootLink.click();
+          origLink.click();
         });
         group.appendChild(btn);
         console.log('[df] add-btn created for', group.id);
@@ -1123,6 +1133,23 @@
         if (!g) return;
         var h2 = g.querySelector('h2');
         if (h2) h2.style.display = 'none';
+      });
+
+      /* Скрытие лишних форм (extra) — показываем только 1 */
+      [ieGroup, debtGroup].forEach(function(g) {
+        if (!g) return;
+        var allBodies = g.querySelectorAll('tbody');
+        var visible = [];
+        allBodies.forEach(function(tb) {
+          if (tb.classList.contains('empty-form')) return;
+          if (tb.querySelector('.form-row')) visible.push(tb);
+        });
+        console.log('[df] tbodies in', g.id, ':', allBodies.length, 'visible:', visible.length);
+        if (visible.length > 1) {
+          for (var i = 1; i < visible.length; i++) {
+            visible[i].style.display = 'none';
+          }
+        }
       });
 
       /* Переключение вкладок */
