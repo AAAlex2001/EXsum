@@ -644,19 +644,20 @@
     width: 100% !important;
   }
 
-  #debt_operations-group td.delete,
-  #debt_operations-group td.field-contractor { display: none !important; }
+  #debt_operations-group td.delete { display: none !important; }
 
-  #debt_operations-group td.field-amount { order: 1 !important; }
+  #debt_operations-group td.field-contractor { order: 1 !important; grid-column: 1 / -1 !important; }
+  #debt_operations-group td.field-contractor::before { content: 'Контрагент' !important; }
+  #debt_operations-group td.field-amount { order: 2 !important; }
   #debt_operations-group td.field-amount::before { content: 'Сумма операции' !important; }
-  #debt_operations-group td.field-operation_type { order: 2 !important; }
+  #debt_operations-group td.field-operation_type { order: 3 !important; }
   #debt_operations-group td.field-operation_type::before { content: 'Тип операции' !important; }
-  #debt_operations-group td.field-percent { order: 3 !important; }
+  #debt_operations-group td.field-percent { order: 4 !important; }
   #debt_operations-group td.field-percent::before { content: 'Процент' !important; }
-  #debt_operations-group td.field-currency { order: 4 !important; }
+  #debt_operations-group td.field-currency { order: 5 !important; }
   #debt_operations-group td.field-currency::before { content: 'Валюта' !important; }
   #debt_operations-group td.field-comment {
-    order: 5 !important;
+    order: 6 !important;
     grid-column: 1 / -1 !important;
   }
   #debt_operations-group td.field-comment::before { content: 'Комментарий' !important; }
@@ -734,6 +735,12 @@
 
   .df-tab-hidden { display: none !important; }
 
+  /* Скрытие иконок шапки */
+  .object-tools { display: none !important; }
+  .datetimeshortcuts { display: none !important; }
+  [data-action-list] { display: none !important; }
+  .material-symbols-outlined { display: none !important; }
+
   /* Панель действий */
   .df-actions-bar {
     display: flex;
@@ -742,7 +749,7 @@
     align-items: center;
     width: 100%;
     height: 32px;
-    margin-top: 8px;
+    margin: 8px 0;
   }
   .df-actions-label {
     font-family: 'Inter', sans-serif;
@@ -892,6 +899,7 @@
 
 {% block object-tools %}{% endblock %}
 {% block object-tools-items %}{% endblock %}
+{% block nav-global %}{% endblock %}
 {% block nav-global-side %}{% endblock %}
 
 {% block content %}
@@ -1111,18 +1119,24 @@
       var debtGroup = document.getElementById('debt_operations-group');
       console.log('[df] inlines:', !!ieGroup, !!debtGroup);
 
-      function addSectionHeader(group, title) {
-        if (!group) return;
-        var firstTbody = group.querySelector('tbody:not(.empty-form)');
-        if (!firstTbody) return;
+      var groupTitles = {};
+      if (ieGroup) groupTitles[ieGroup.id] = '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430';
+      if (debtGroup) groupTitles[debtGroup.id] = '\u0414\u0432\u0438\u0436\u0435\u043D\u0438\u044F \u043A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u043E\u0432';
+
+      function addSectionHeader(tbody, title) {
+        if (!tbody || tbody.querySelector('.df-section-hdr')) return;
         var el = document.createElement('div');
         el.className = 'df-section-hdr';
         el.innerHTML = '<span class="df-section-title">' + title + '</span><div class="df-section-line"></div>';
-        firstTbody.insertBefore(el, firstTbody.firstChild);
+        tbody.insertBefore(el, tbody.firstChild);
       }
 
-      addSectionHeader(ieGroup, '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430');
-      addSectionHeader(debtGroup, '\u0414\u0432\u0438\u0436\u0435\u043D\u0438\u044F \u043A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u043E\u0432');
+      [ieGroup, debtGroup].forEach(function(g) {
+        if (!g) return;
+        g.querySelectorAll('tbody:not(.empty-form)').forEach(function(tb) {
+          if (tb.querySelector('.form-row')) addSectionHeader(tb, groupTitles[g.id]);
+        });
+      });
 
       /* Кнопки "Добавить" — выносим за пределы карточки */
       function createAddButton(group, label) {
@@ -1161,7 +1175,13 @@
       createAddButton(debtGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435');
 
       /* Панель действий */
-      function createActionBar(tbody, groupId) {
+      function getVisibleTbodies(group) {
+        return Array.from(group.querySelectorAll('tbody:not(.empty-form)')).filter(function(tb) {
+          return tb.querySelector('.form-row') && getComputedStyle(tb).display !== 'none';
+        });
+      }
+
+      function createActionBar(tbody, group, isLast) {
         var bar = document.createElement('div');
         bar.className = 'df-actions-bar';
         var lbl = document.createElement('span');
@@ -1169,17 +1189,15 @@
         lbl.textContent = '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F';
         var btns = document.createElement('div');
         btns.className = 'df-actions-btns';
-        var swapBtn = document.createElement('button');
-        swapBtn.type = 'button';
-        swapBtn.className = 'df-swap-btn';
-        swapBtn.innerHTML = '\u041F\u043E\u043C\u0435\u043D\u044F\u0442\u044C \u043C\u0435\u0441\u0442\u0430\u043C\u0438 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 2.83V13.17" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M6 10.67L3.5 13.17L1 10.67" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 13.17V2.83" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M10 5.33L12.5 2.83L15 5.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        if (groupId === 'deal_data-group') {
+        if (!isLast) {
+          var swapBtn = document.createElement('button');
+          swapBtn.type = 'button';
+          swapBtn.className = 'df-swap-btn';
+          swapBtn.innerHTML = '\u041F\u043E\u043C\u0435\u043D\u044F\u0442\u044C \u043C\u0435\u0441\u0442\u0430\u043C\u0438 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 2.83V13.17" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M6 10.67L3.5 13.17L1 10.67" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 13.17V2.83" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M10 5.33L12.5 2.83L15 5.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>';
           swapBtn.addEventListener('click', function() {
-            [['income_amount','expense_amount'],['income_rate','expense_rate'],['income_account','expense_account']].forEach(function(p) {
-              var a = tbody.querySelector('[name*="'+p[0]+'"]'), b = tbody.querySelector('[name*="'+p[1]+'"]');
-              if (a && b) { var t = a.value; a.value = b.value; b.value = t; }
-            });
+            swapCards(group, tbody);
           });
+          btns.appendChild(swapBtn);
         }
         var delBtn = document.createElement('button');
         delBtn.type = 'button';
@@ -1189,13 +1207,9 @@
           var cb = tbody.querySelector('td.delete input[type="checkbox"]');
           if (cb) cb.checked = true;
           tbody.style.setProperty('display', 'none', 'important');
-          bar.style.setProperty('display', 'none', 'important');
-          var next = bar.nextElementSibling;
-          if (next && next.classList.contains('df-separator')) next.style.setProperty('display', 'none', 'important');
-          var prev = tbody.previousElementSibling;
-          if (prev && prev.classList.contains('df-separator')) prev.style.setProperty('display', 'none', 'important');
+          tbody.classList.remove('df-form-visible');
+          rebuildActionBars(group);
         });
-        btns.appendChild(swapBtn);
         btns.appendChild(delBtn);
         bar.appendChild(lbl);
         bar.appendChild(btns);
@@ -1210,6 +1224,36 @@
         sep.innerHTML = '<div class="df-separator-line"></div><svg class="df-separator-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12.75 16.19L15.47 13.47C15.76 13.18 16.24 13.18 16.53 13.47C16.82 13.76 16.82 14.24 16.53 14.53L12.53 18.53C12.24 18.82 11.76 18.82 11.47 18.53L7.47 14.53C7.18 14.24 7.18 13.76 7.47 13.47C7.76 13.18 8.24 13.18 8.53 13.47L11.25 16.19V6.5C11.25 6.09 11.59 5.75 12 5.75C12.41 5.75 12.75 6.09 12.75 6.5V16.19Z" fill="#D7DBE4"/></svg><div class="df-separator-line"></div>';
         beforeEl.parentNode.insertBefore(sep, beforeEl);
         return sep;
+      }
+
+      var _rebuilding = false;
+      function rebuildActionBars(group) {
+        if (_rebuilding) return;
+        _rebuilding = true;
+        group.querySelectorAll('.df-actions-bar, .df-separator').forEach(function(el) { el.remove(); });
+        var visible = getVisibleTbodies(group);
+        if (visible.length >= 2) {
+          var isDebt = (group === debtGroup);
+          for (var i = 0; i < visible.length; i++) {
+            var isLast = (i === visible.length - 1);
+            createActionBar(visible[i], group, isLast);
+            if (isDebt && i < visible.length - 1) createSeparator(visible[i + 1]);
+          }
+        }
+        _rebuilding = false;
+      }
+
+      function swapCards(group, tbody) {
+        var visible = getVisibleTbodies(group);
+        var idx = visible.indexOf(tbody);
+        if (idx < 0 || idx >= visible.length - 1) return;
+        var next = visible[idx + 1];
+        var marker = document.createElement('span');
+        tbody.parentNode.insertBefore(marker, tbody);
+        next.parentNode.insertBefore(tbody, next.nextSibling);
+        marker.parentNode.insertBefore(next, marker);
+        marker.remove();
+        rebuildActionBars(group);
       }
 
       /* Скрытие нативных кнопок */
@@ -1230,32 +1274,23 @@
         });
       });
 
-      /* Применение действий к формам */
-      [ieGroup, debtGroup].forEach(function(g) {
-        if (!g) return;
-        var tbodies = Array.from(g.querySelectorAll('tbody:not(.empty-form)'));
-        var visible = tbodies.filter(function(tb) { return tb.querySelector('.form-row'); });
-        for (var i = 0; i < visible.length; i++) {
-          createActionBar(visible[i], g.id);
-          if (g === debtGroup && i < visible.length - 1) createSeparator(visible[i + 1]);
-        }
-      });
-
-      /* MutationObserver */
+      /* MutationObserver — показываем панель действий только при 2+ видимых формах */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         var table = g.querySelector('table');
         if (!table) return;
         new MutationObserver(function(muts) {
+          var hasNewTbody = false;
           muts.forEach(function(m) {
             m.addedNodes.forEach(function(node) {
               if (node.nodeName === 'TBODY' && !node.classList.contains('empty-form')) {
                 node.classList.add('df-form-visible');
-                if (g === debtGroup) createSeparator(node);
-                createActionBar(node, g.id);
+                addSectionHeader(node, groupTitles[g.id]);
+                hasNewTbody = true;
               }
             });
           });
+          if (hasNewTbody) rebuildActionBars(g);
         }).observe(table, { childList: true });
       });
 
