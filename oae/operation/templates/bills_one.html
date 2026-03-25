@@ -172,7 +172,7 @@
   .form-row:has(.field-national_currency) { order: 10; }
   .form-row:has(.field-deal_1c)     { order: 12; }
 
-  /* Labels */
+  /* лейблы */
   #content-main .field-line label,
   #content-main .field-line .flex label {
     font-weight: 500 !important;
@@ -185,7 +185,7 @@
     width: auto !important;
   }
 
-  /* Inputs */
+  /* инупты */
   #content-main .field-line input[type="text"],
   #content-main .field-line input[type="number"],
   #content-main .field-line input[type="url"],
@@ -291,7 +291,7 @@
     margin-top: 4px;
   }
 
-  /* Tom-Select */
+  /* селекты */
   html body .ts-wrapper .ts-control,
   #content-main .ts-wrapper .ts-control {
     font-family: 'Inter', sans-serif !important;
@@ -343,7 +343,6 @@
     color: #FFFFFF !important;
   }
 
-  /* Related widget wrapper */
   #content-main .related-widget-wrapper {
     display: flex !important;
     flex-direction: row !important;
@@ -358,7 +357,6 @@
   }
   #content-main .related-widget-wrapper > a { display: none !important; }
 
-  /* Inline groups */
   #content-main .inline-group {
     width: 100% !important;
     max-width: 100% !important;
@@ -378,7 +376,6 @@
   }
   #content-main .inline-related fieldset > h2 { display: none !important; }
 
-  /* Каждый tbody = отдельная карточка */
   #deal_data-group tbody:not(.empty-form),
   #debt_operations-group tbody:not(.empty-form) {
     background: #F8F8F8 !important;
@@ -387,7 +384,6 @@
     margin-bottom: 12px !important;
   }
 
-  /* Обход Alpine x-show */
   #deal_data-group,
   #debt_operations-group {
     display: block !important;
@@ -397,7 +393,6 @@
     display: none !important;
   }
 
-  /* Сброс unfold обёрток */
   #deal_data-group .formset-wrapper,
   #debt_operations-group .formset-wrapper,
   #deal_data-group [data-simplebar],
@@ -432,7 +427,6 @@
     gap: 0 !important;
   }
 
-  /* Скрытие empty-form и лишних template */
   #deal_data-group tbody.empty-form,
   #debt_operations-group tbody.empty-form {
     display: none !important;
@@ -441,25 +435,23 @@
   #debt_operations-group tbody.original ~ tbody.template {
     display: none !important;
   }
-  /* FOUC — скрываем 2+ tbody сразу через CSS (не ждём JS) */
+
   #deal_data-group tbody:not(.empty-form) ~ tbody:not(.empty-form):not(.df-form-visible),
   #debt_operations-group tbody:not(.empty-form) ~ tbody:not(.empty-form):not(.df-form-visible) {
     display: none !important;
   }
-  /* JS добавляет df-form-visible для новых форм */
+
   #deal_data-group tbody.df-form-visible,
   #debt_operations-group tbody.df-form-visible {
     display: block !important;
   }
 
-  /* Tfoot и нативные кнопки — скрываем */
   #deal_data-group tfoot,
   #debt_operations-group tfoot {
     display: none !important;
   }
   .df-form-hidden { display: none !important; }
 
-  /* JS-кнопка добавления */
   .df-add-btn {
     display: inline-flex !important;
     justify-content: center;
@@ -479,7 +471,7 @@
     transition: border-color 0.15s, background 0.15s;
     box-sizing: border-box;
     cursor: pointer;
-    margin-top: 12px;
+    margin-top: 4px;
   }
   .df-add-btn:hover {
     border-color: #079669 !important;
@@ -644,20 +636,19 @@
     width: 100% !important;
   }
 
-  #debt_operations-group td.delete { display: none !important; }
+  #debt_operations-group td.delete,
+  #debt_operations-group td.field-contractor { display: none !important; }
 
-  #debt_operations-group td.field-contractor { order: 1 !important; grid-column: 1 / -1 !important; }
-  #debt_operations-group td.field-contractor::before { content: 'Контрагент' !important; }
-  #debt_operations-group td.field-amount { order: 2 !important; }
+  #debt_operations-group td.field-amount { order: 1 !important; }
   #debt_operations-group td.field-amount::before { content: 'Сумма операции' !important; }
-  #debt_operations-group td.field-operation_type { order: 3 !important; }
+  #debt_operations-group td.field-operation_type { order: 2 !important; }
   #debt_operations-group td.field-operation_type::before { content: 'Тип операции' !important; }
-  #debt_operations-group td.field-percent { order: 4 !important; }
+  #debt_operations-group td.field-percent { order: 3 !important; }
   #debt_operations-group td.field-percent::before { content: 'Процент' !important; }
-  #debt_operations-group td.field-currency { order: 5 !important; }
+  #debt_operations-group td.field-currency { order: 4 !important; }
   #debt_operations-group td.field-currency::before { content: 'Валюта' !important; }
   #debt_operations-group td.field-comment {
-    order: 6 !important;
+    order: 5 !important;
     grid-column: 1 / -1 !important;
   }
   #debt_operations-group td.field-comment::before { content: 'Комментарий' !important; }
@@ -735,11 +726,10 @@
 
   .df-tab-hidden { display: none !important; }
 
-  /* Скрытие иконок шапки */
-  .object-tools { display: none !important; }
   .datetimeshortcuts { display: none !important; }
-  [data-action-list] { display: none !important; }
-  .material-symbols-outlined { display: none !important; }
+  .object-tools { display: none !important; }
+  .flex.items-center.ml-auto > ul { display: none !important; }
+  .change-form > div > .flex.items-center.ml-auto { display: none !important; }
 
   /* Панель действий */
   .df-actions-bar {
@@ -815,7 +805,7 @@
   .df-separator-line { flex: 1; height: 0; border-top: 1px solid #D7DBE4; }
   .df-separator-arrow { width: 24px; height: 24px; flex-shrink: 0; }
 
-  /* ===== DARK THEME ===== */
+  /* ===== ЧЕРНАЯ ТЕМА ===== */
   .dark .df-bill-card { background: #1F2937; }
   .dark .df-bill-card__name { color: #9CA3AF; }
   .dark .df-bill-card__amount { color: #F9FAFB; }
@@ -1082,7 +1072,7 @@
         }
       } catch(e) { console.error('[df] datetime:', e); }
 
-      /* Тоггл — используем нативный Unfold тоггл (как у by_nikita) */
+      /* Тоггл */
       var closedCheckbox = form.querySelector('input[name="closed"]');
       console.log('[df] closed:', closedCheckbox ? closedCheckbox.type : 'NOT FOUND');
 
@@ -1138,7 +1128,7 @@
         });
       });
 
-      /* Кнопки "Добавить" — выносим за пределы карточки */
+      /* Кнопки "Добавить" */
       function createAddButton(group, label) {
         if (!group) return;
         var origLink = group.querySelector('tfoot a.add-row')
@@ -1274,7 +1264,7 @@
         });
       });
 
-      /* MutationObserver — показываем панель действий только при 2+ видимых формах */
+      /* MutationObserver — показываем панель действий только при 2+ видимых формах. Другого метода не нашел */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         var table = g.querySelector('table');
@@ -1359,7 +1349,6 @@
       setPlaceholders();
       setTimeout(setPlaceholders, 500);
 
-      /* Tom-Select */
       var isDark = document.documentElement.classList.contains('dark');
       function styleDropdowns() {
         document.querySelectorAll('.ts-dropdown').forEach(function(dd) {
