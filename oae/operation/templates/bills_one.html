@@ -734,6 +734,80 @@
 
   .df-tab-hidden { display: none !important; }
 
+  /* Панель действий */
+  .df-actions-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    margin-top: 8px;
+  }
+  .df-actions-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #1E1E1E;
+  }
+  .df-actions-btns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .df-swap-btn {
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 16px;
+    gap: 10px;
+    height: 32px;
+    border: 1px solid #B7BBC4;
+    border-radius: 9999px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #1E1E1E;
+    transition: border-color 0.15s;
+  }
+  .df-swap-btn:hover { border-color: #079669; }
+  .df-delete-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 16px;
+    gap: 10px;
+    height: 32px;
+    background: #FFEFEF;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+    color: #FF5E5E;
+    transition: background 0.15s;
+  }
+  .df-delete-btn:hover { background: #FFE0E0; }
+
+  /* Разделитель между карточками контрагентов */
+  .df-separator {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 24px;
+    margin: 4px 0;
+  }
+  .df-separator-line { flex: 1; height: 0; border-top: 1px solid #D7DBE4; }
+  .df-separator-arrow { width: 24px; height: 24px; flex-shrink: 0; }
+
   /* ===== DARK THEME ===== */
   .dark .df-bill-card { background: #1F2937; }
   .dark .df-bill-card__name { color: #9CA3AF; }
@@ -804,11 +878,21 @@
   .dark .df-contractor-info { background: #1F2937; }
   .dark .df-contractor-info-label { color: #6B7280; }
   .dark .df-contractor-info-value { color: #F9FAFB; }
+  .dark .df-actions-label { color: #E5E7EB; }
+  .dark .df-swap-btn { border-color: #4B5563; color: #E5E7EB; }
+  .dark .df-swap-btn:hover { border-color: #079669; }
+  .dark .df-swap-btn svg path { stroke: #E5E7EB; }
+  .dark .df-delete-btn { background: rgba(255,94,94,0.15); }
+  .dark .df-delete-btn:hover { background: rgba(255,94,94,0.25); }
+  .dark .df-separator-line { border-color: #374151; }
+  .dark .df-separator-arrow path { fill: #374151; }
+  .dark .df-add-btn svg path { stroke: #E5E7EB; }
 </style>
 {% endblock %}
 
 {% block object-tools %}{% endblock %}
 {% block object-tools-items %}{% endblock %}
+{% block nav-global-side %}{% endblock %}
 
 {% block content %}
   <input type="hidden" name="autocomplete" value="{{ autocomplete }}">
@@ -1065,7 +1149,7 @@
         var btn = document.createElement('a');
         btn.href = '#';
         btn.className = 'df-add-btn';
-        btn.textContent = label;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 17V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 12L17 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' + label;
         btn.addEventListener('click', function(e) {
           e.preventDefault();
           origLink.click();
@@ -1076,7 +1160,59 @@
       createAddButton(ieGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0442\u0440\u043E\u043A\u0443');
       createAddButton(debtGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435');
 
-      /* Скрытие ВСЕХ нативных кнопок "Добавить" внутри карточек */
+      /* Панель действий */
+      function createActionBar(tbody, groupId) {
+        var bar = document.createElement('div');
+        bar.className = 'df-actions-bar';
+        var lbl = document.createElement('span');
+        lbl.className = 'df-actions-label';
+        lbl.textContent = '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F';
+        var btns = document.createElement('div');
+        btns.className = 'df-actions-btns';
+        var swapBtn = document.createElement('button');
+        swapBtn.type = 'button';
+        swapBtn.className = 'df-swap-btn';
+        swapBtn.innerHTML = '\u041F\u043E\u043C\u0435\u043D\u044F\u0442\u044C \u043C\u0435\u0441\u0442\u0430\u043C\u0438 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 2.83V13.17" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M6 10.67L3.5 13.17L1 10.67" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 13.17V2.83" stroke="currentColor" stroke-width="1.33" stroke-linecap="round"/><path d="M10 5.33L12.5 2.83L15 5.33" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        if (groupId === 'deal_data-group') {
+          swapBtn.addEventListener('click', function() {
+            [['income_amount','expense_amount'],['income_rate','expense_rate'],['income_account','expense_account']].forEach(function(p) {
+              var a = tbody.querySelector('[name*="'+p[0]+'"]'), b = tbody.querySelector('[name*="'+p[1]+'"]');
+              if (a && b) { var t = a.value; a.value = b.value; b.value = t; }
+            });
+          });
+        }
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'df-delete-btn';
+        delBtn.innerHTML = '\u0423\u0434\u0430\u043B\u0438\u0442\u044C <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12" stroke="#FF5E5E" stroke-width="1.33" stroke-linecap="round"/><path d="M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4" stroke="#FF5E5E" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.67 4v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4" stroke="#FF5E5E" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        delBtn.addEventListener('click', function() {
+          var cb = tbody.querySelector('td.delete input[type="checkbox"]');
+          if (cb) cb.checked = true;
+          tbody.style.setProperty('display', 'none', 'important');
+          bar.style.setProperty('display', 'none', 'important');
+          var next = bar.nextElementSibling;
+          if (next && next.classList.contains('df-separator')) next.style.setProperty('display', 'none', 'important');
+          var prev = tbody.previousElementSibling;
+          if (prev && prev.classList.contains('df-separator')) prev.style.setProperty('display', 'none', 'important');
+        });
+        btns.appendChild(swapBtn);
+        btns.appendChild(delBtn);
+        bar.appendChild(lbl);
+        bar.appendChild(btns);
+        if (tbody.nextSibling) tbody.parentNode.insertBefore(bar, tbody.nextSibling);
+        else tbody.parentNode.appendChild(bar);
+        return bar;
+      }
+
+      function createSeparator(beforeEl) {
+        var sep = document.createElement('div');
+        sep.className = 'df-separator';
+        sep.innerHTML = '<div class="df-separator-line"></div><svg class="df-separator-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12.75 16.19L15.47 13.47C15.76 13.18 16.24 13.18 16.53 13.47C16.82 13.76 16.82 14.24 16.53 14.53L12.53 18.53C12.24 18.82 11.76 18.82 11.47 18.53L7.47 14.53C7.18 14.24 7.18 13.76 7.47 13.47C7.76 13.18 8.24 13.18 8.53 13.47L11.25 16.19V6.5C11.25 6.09 11.59 5.75 12 5.75C12.41 5.75 12.75 6.09 12.75 6.5V16.19Z" fill="#D7DBE4"/></svg><div class="df-separator-line"></div>';
+        beforeEl.parentNode.insertBefore(sep, beforeEl);
+        return sep;
+      }
+
+      /* Скрытие нативных кнопок */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         var h2 = g.querySelector('h2');
@@ -1094,21 +1230,33 @@
         });
       });
 
-      /* MutationObserver: новые формы после "Добавить" получают df-form-visible */
+      /* Применение действий к формам */
+      [ieGroup, debtGroup].forEach(function(g) {
+        if (!g) return;
+        var tbodies = Array.from(g.querySelectorAll('tbody:not(.empty-form)'));
+        var visible = tbodies.filter(function(tb) { return tb.querySelector('.form-row'); });
+        for (var i = 0; i < visible.length; i++) {
+          createActionBar(visible[i], g.id);
+          if (g === debtGroup && i < visible.length - 1) createSeparator(visible[i + 1]);
+        }
+      });
+
+      /* MutationObserver */
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         var table = g.querySelector('table');
         if (!table) return;
-        var obs = new MutationObserver(function(muts) {
+        new MutationObserver(function(muts) {
           muts.forEach(function(m) {
             m.addedNodes.forEach(function(node) {
               if (node.nodeName === 'TBODY' && !node.classList.contains('empty-form')) {
                 node.classList.add('df-form-visible');
+                if (g === debtGroup) createSeparator(node);
+                createActionBar(node, g.id);
               }
             });
           });
-        });
-        obs.observe(table, { childList: true });
+        }).observe(table, { childList: true });
       });
 
       /* Переключение вкладок */
