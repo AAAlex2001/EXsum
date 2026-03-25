@@ -726,10 +726,12 @@
 
   .df-tab-hidden { display: none !important; }
 
-  .datetimeshortcuts { display: none !important; }
+  /* Скрытие шапки */
   .object-tools { display: none !important; }
-  .flex.items-center.ml-auto > ul { display: none !important; }
-  .change-form > div > .flex.items-center.ml-auto { display: none !important; }
+  .help.timezonewarning { display: none !important; }
+  .df-datetime-warning { display: block !important; }
+  /* DateTimeShortcuts — полностью скрываем везде (свои кнопки делаем отдельно) */
+  .datetimeshortcuts { display: none !important; }
 
   /* Панель действий */
   .df-actions-bar {
@@ -978,7 +980,7 @@
             if (!ch.classList || !ch.classList.contains('datetimeshortcuts')) ch.style.display = 'none';
           });
           if (dateFormRow) {
-            dateFormRow.querySelectorAll('.timezonewarning, br').forEach(function(el) { el.style.display = 'none'; });
+            dateFormRow.querySelectorAll('br').forEach(function(el) { el.style.display = 'none'; });
             var origLbl = dateFormRow.querySelector('label[for*="date_create"]');
             if (origLbl) origLbl.style.display = 'none';
           }
@@ -1066,7 +1068,8 @@
           var warning = document.createElement('div');
           warning.className = 'df-datetime-warning';
           warning.style.gridColumn = '1 / -1';
-          warning.textContent = '\u0423\u043A\u0430\u0437\u0430\u043D\u043E \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430 (\u041C\u0421\u041A)';
+          var origWarn = form.querySelector('.timezonewarning') || document.querySelector('.timezonewarning');
+          warning.textContent = origWarn ? origWarn.textContent : '\u0423\u043A\u0430\u0437\u0430\u043D\u043E \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u0430 (\u041C\u0421\u041A)';
           dateFieldLine.appendChild(dtRow);
           dateFieldLine.appendChild(warning);
         }
@@ -1280,9 +1283,29 @@
               }
             });
           });
-          if (hasNewTbody) rebuildActionBars(g);
+          if (hasNewTbody) {
+            rebuildActionBars(g);
+            syncContractorToInlines();
+          }
         }).observe(table, { childList: true });
       });
+
+      var mainContractor = form.querySelector('select[name="contractor"]');
+      function syncContractorToInlines() {
+        if (!mainContractor) return;
+        var val = mainContractor.value;
+        document.querySelectorAll('#debt_operations-group select[name$="-contractor"]').forEach(function(sel) {
+          if (sel !== mainContractor && val) sel.value = val;
+        });
+      }
+      if (mainContractor) {
+        mainContractor.addEventListener('change', syncContractorToInlines);
+        if (mainContractor.tomselect) {
+          mainContractor.tomselect.on('change', syncContractorToInlines);
+        }
+        syncContractorToInlines();
+      }
+      form.addEventListener('submit', function() { syncContractorToInlines(); });
 
       /* Переключение вкладок */
       if (debtGroup) debtGroup.classList.add('df-hidden');
@@ -1364,8 +1387,15 @@
       observer.observe(document.body, { childList: true, subtree: true });
       styleDropdowns();
 
-      console.log('[df] DTS:', !!window.DateTimeShortcuts, window.DateTimeShortcuts ? 'cal:' + (DateTimeShortcuts.calendars||[]).length + ' clk:' + (DateTimeShortcuts.clockInputs||[]).length : '-');
-      console.log('[df] calLink:', document.querySelectorAll('[id^="calendarlink"]').length, 'clkLink:', document.querySelectorAll('[id^="clocklink"]').length);
+      var contentEl = document.getElementById('content');
+      if (contentEl) {
+        contentEl.querySelectorAll(':scope > div').forEach(function(div) {
+          if (div.classList.contains('items-start') && div.classList.contains('flex')) {
+            div.style.setProperty('display', 'none', 'important');
+            console.log('[df] hidden unfold tab-bar');
+          }
+        });
+      }
       console.log('[df] tfoot ie:', document.querySelectorAll('#deal_data-group tfoot a').length, 'debt:', document.querySelectorAll('#debt_operations-group tfoot a').length);
       console.log('[df] init DONE');
       } catch(e) { console.error('[df] FATAL:', e.message, e.stack); }
