@@ -588,7 +588,8 @@
   #deal_data-group td.delete,
   #deal_data-group td.field-calculated,
   #deal_data-group td.field-rate_calculated,
-  #deal_data-group td.field-transaction_id { display: none !important; }
+  #deal_data-group td.field-transaction_id,
+  #deal_data-group td.field-deal { display: none !important; }
 
   #deal_data-group td.field-income_amount {
     order: 1 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
@@ -764,6 +765,10 @@
   }
 
   .df-tab-hidden { display: none !important; }
+
+  .errorlist { display: block !important; list-style: none !important; padding: 0 !important; margin: 4px 0 0 !important; }
+  .errorlist li { display: block !important; color: #FF5E5E !important; font-family: 'Inter', sans-serif; font-size: 11px; line-height: 13px; }
+  .errornote { display: block !important; color: #FF5E5E !important; font-family: 'Inter', sans-serif; font-size: 13px; margin-bottom: 8px !important; }
 
   .object-tools { display: none !important; }
   .timezonewarning { display: none !important; }
@@ -1101,15 +1106,18 @@
           }
           dateField.appendChild(makeWarning(warnText));
           timeField.appendChild(makeWarning(warnText));
-          var _tzObs = new MutationObserver(function() {
+          var _tzAttempts = 0;
+          var _tzInterval = setInterval(function() {
+            _tzAttempts++;
             var dw = document.querySelector('.timezonewarning');
-            if (!dw) return;
-            var djText = dw.textContent.trim();
-            if (!djText) return;
-            document.querySelectorAll('.df-datetime-warning span').forEach(function(sp) { sp.textContent = djText; });
-            _tzObs.disconnect();
-          });
-          _tzObs.observe(document.body, { childList: true, subtree: true });
+            if (dw && dw.textContent.trim()) {
+              var djText = dw.textContent.trim();
+              document.querySelectorAll('.df-datetime-warning span').forEach(function(sp) { sp.textContent = djText; });
+              clearInterval(_tzInterval);
+              console.log('[df] timezone: заменено на Django текст:', djText);
+            }
+            if (_tzAttempts >= 50) clearInterval(_tzInterval);
+          }, 100);
           dtRow.appendChild(dateField);
           dtRow.appendChild(timeField);
           dateFieldLine.appendChild(dtRow);
@@ -1124,6 +1132,21 @@
       infoBar.style.order = '99';
       infoBar.innerHTML = '<span class="df-contractor-info-label">\u0421\u0447\u0435\u0442 \u041A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u0430</span><span class="df-contractor-info-value">\u2014</span>';
       aligned.appendChild(infoBar);
+      var infoValue = infoBar.querySelector('.df-contractor-info-value');
+      function loadContractorBalance() {
+        var csel = form.querySelector('select[name="contractor"]');
+        if (!csel || !csel.value) { infoValue.textContent = '\u2014'; return; }
+        fetch('/api/v1/operation/get_cashflow_balance/?contractor_id=' + csel.value)
+          .then(function(r) { return r.json(); })
+          .then(function(d) { infoValue.textContent = d.cashflow_bill || '\u2014'; })
+          .catch(function() { infoValue.textContent = '\u2014'; });
+      }
+      var cSelect = form.querySelector('select[name="contractor"]');
+      if (cSelect) {
+        cSelect.addEventListener('change', loadContractorBalance);
+        if (cSelect.tomselect) cSelect.tomselect.on('change', loadContractorBalance);
+        loadContractorBalance();
+      }
 
       try {
         var formRows = aligned.querySelectorAll('.form-row');
@@ -1164,7 +1187,10 @@
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         g.querySelectorAll('tbody:not(.empty-form)').forEach(function(tb) {
-          if (tb.querySelector('.form-row')) addSectionHeader(tb, groupTitles[g.id]);
+          if (tb.querySelector('.form-row')) {
+            tb.classList.add('df-form-visible');
+            addSectionHeader(tb, groupTitles[g.id]);
+          }
         });
       });
 
@@ -1318,7 +1344,6 @@
           });
           if (hasNewTbody) {
             rebuildActionBars(g);
-            syncContractorToInlines();
           }
         }).observe(table, { childList: true });
       });
@@ -1327,16 +1352,25 @@
       function syncContractorToInlines() {
         if (!mainContractor) return;
         var val = mainContractor.value;
-        document.querySelectorAll('#debt_operations-group select[name$="-contractor"]').forEach(function(sel) {
-          if (sel !== mainContractor && val) sel.value = val;
+        document.querySelectorAll('#debt_operations-group tbody:not(.empty-form)').forEach(function(tbody) {
+          var contractorSel = tbody.querySelector('select[name$="-contractor"]');
+          if (!contractorSel || contractorSel === mainContractor) return;
+          var hasData = false;
+          tbody.querySelectorAll('input, select, textarea').forEach(function(field) {
+            if (field.type === 'hidden' || field.type === 'checkbox') return;
+            if (field === contractorSel) return;
+            if (field.name && field.name.indexOf('-contractor') !== -1) return;
+            if (field.name && (field.name.indexOf('-operation_type') !== -1 || field.name.indexOf('-percent') !== -1 || field.name.indexOf('-currency') !== -1)) return;
+            if (field.name && field.name.indexOf('-DELETE') !== -1) return;
+            if (field.value && field.value.trim() !== '' && field.value.trim() !== '0') hasData = true;
+          });
+          if (hasData && val) {
+            contractorSel.value = val;
+            if (contractorSel.tomselect) {
+              contractorSel.tomselect.setValue(val, true);
+            }
+          }
         });
-      }
-      if (mainContractor) {
-        mainContractor.addEventListener('change', syncContractorToInlines);
-        if (mainContractor.tomselect) {
-          mainContractor.tomselect.on('change', syncContractorToInlines);
-        }
-        syncContractorToInlines();
       }
       form.addEventListener('submit', function() { syncContractorToInlines(); });
 
@@ -1426,6 +1460,32 @@
             console.log('[df] hidden unfold tab-bar');
           }
         });
+      }
+      document.querySelectorAll('.errorlist li, .errornote').forEach(function(el) {
+        var parent = el.closest('[class*="field-"]') || el.closest('.inline-related') || el.parentElement;
+        console.log('[df] ERROR:', parent ? parent.className : 'non-field', '|', el.textContent.trim());
+      });
+      if (debtGroup && debtGroup.querySelector('.errorlist')) {
+        console.log('[df] \u041E\u0448\u0438\u0431\u043A\u0438 \u0432 debt_operations \u2014 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u044E \u0442\u0430\u0431');
+        if (tabsDiv) {
+          tabsDiv.querySelectorAll('.df-tab').forEach(function(t) {
+            t.classList.toggle('df-tab--active', t.dataset.tab === 'contractor');
+          });
+          mainFieldset.querySelectorAll('.form-row').forEach(function(row) {
+            if (row.querySelector('.field-contractor') || row.querySelector('[name="contractor"]') || row.querySelector('select[name="contractor"]')) {
+              row.classList.remove('df-contractor-hidden');
+            } else {
+              row.classList.add('df-contractor-hidden');
+            }
+          });
+          hdr.classList.add('df-contractor-hidden');
+          var btm3 = aligned.querySelector('.df-bottom-3');
+          if (btm3) btm3.classList.add('df-contractor-hidden');
+          mainFieldset.classList.add('df-contractor-mode');
+          infoBar.classList.remove('df-tab-hidden');
+          if (ieGroup) ieGroup.classList.add('df-hidden');
+          if (debtGroup) debtGroup.classList.remove('df-hidden');
+        }
       }
       console.log('[df] tfoot ie:', document.querySelectorAll('#deal_data-group tfoot a').length, 'debt:', document.querySelectorAll('#debt_operations-group tfoot a').length);
       console.log('[df] init DONE');

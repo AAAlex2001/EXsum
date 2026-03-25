@@ -922,41 +922,10 @@
             <span class="pp-courses__header-text">Курсы</span>
           </div>
         </div>
-        <div class="pp-courses__body">
-          {% for c in courses %}
-            {% if not forloop.first %}
-              <div class="pp-courses__divider"></div>
-            {% endif %}
-            <div class="pp-courses__item">
-              <span class="pp-courses__name">{{ c.name }}</span>
-              <div class="pp-courses__vals">
-                <span class="pp-courses__rate">{{ c.value|floatformat:3 }}</span>
-                {% if c.variation %}
-                    {% if c.direction == 'down' %}
-                      <div class="pp-courses__badge pp-courses__badge--down">
-                        <svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none">
-                          <path d="M8 3.5V12.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M12 8.5L8 12.5L4 8.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span class="pp-courses__badge-text">{{ c.variation|floatformat:1 }}%</span>
-                      </div>
-                    {% else %}
-                      <div class="pp-courses__badge pp-courses__badge--up">
-                        <svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none">
-                          <path d="M8 12.5V3.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          <path d="M4 7.5L8 3.5L12 7.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span class="pp-courses__badge-text">{{ c.variation|floatformat:1 }}%</span>
-                      </div>
-                    {% endif %}
-                {% endif %}
-              </div>
-            </div>
-          {% empty %}
-            <div class="pp-courses__item">
-              <span class="pp-courses__name">Нет курсов</span>
-            </div>
-          {% endfor %}
+        <div class="pp-courses__body" id="pp-courses-body-1">
+          <div class="pp-courses__item">
+            <span class="pp-courses__name">Загрузка...</span>
+          </div>
         </div>
       </div>
 
@@ -1138,20 +1107,10 @@
             <span class="pp-courses__header-text">Курсы</span>
           </div>
         </div>
-        <div class="pp-courses__body">
-          {% for c in courses %}
-            {% if not forloop.first %}
-              <div class="pp-courses__divider"></div>
-            {% endif %}
-            <div class="pp-courses__item">
-              <span class="pp-courses__name">{{ c.name }}</span>
-              <div class="pp-courses__vals">
-                <span class="pp-courses__rate">{{ c.value|floatformat:3 }}</span>
-              </div>
-            </div>
-          {% empty %}
-            <div class="pp-courses__item"><span class="pp-courses__name">Нет курсов</span></div>
-          {% endfor %}
+        <div class="pp-courses__body" id="pp-courses-body-2">
+          <div class="pp-courses__item">
+            <span class="pp-courses__name">Загрузка...</span>
+          </div>
         </div>
       </div>
       <div class="pp-metrics">
@@ -1271,6 +1230,59 @@
   {% endif %}
 
 </div>
+
+<script>
+(function() {
+  var userId = '{{ request.user.id }}';
+  var containers = document.querySelectorAll('[id^="pp-courses-body-"]');
+  if (!containers.length) return;
+
+  var arrowUp = '<svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none"><path d="M8 12.5V3.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7.5L8 3.5L12 7.5" stroke="#079669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var arrowDown = '<svg class="pp-courses__badge-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3.5V12.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.5L8 12.5L4 8.5" stroke="#FF5E5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function renderCourses(container, courses) {
+    container.innerHTML = '';
+    if (!courses || !courses.length) {
+      container.innerHTML = '<div class="pp-courses__item"><span class="pp-courses__name">Нет курсов</span></div>';
+      return;
+    }
+    courses.forEach(function(c, i) {
+      if (i > 0) {
+        var divider = document.createElement('div');
+        divider.className = 'pp-courses__divider';
+        container.appendChild(divider);
+      }
+      var item = document.createElement('div');
+      item.className = 'pp-courses__item';
+      var isDown = (c.direction === 'down');
+      var variation = parseFloat(c.variation) || 0;
+      var value = parseFloat(c.value) || 0;
+      item.innerHTML = '<span class="pp-courses__name">' + c.name + '</span>' +
+        '<div class="pp-courses__vals">' +
+          '<span class="pp-courses__rate">' + value.toFixed(3) + '</span>' +
+          '<div class="pp-courses__badge pp-courses__badge--' + (isDown ? 'down' : 'up') + '">' +
+            (isDown ? arrowDown : arrowUp) +
+            '<span class="pp-courses__badge-text">' + variation.toFixed(1) + '%</span>' +
+          '</div>' +
+        '</div>';
+      container.appendChild(item);
+    });
+  }
+
+  fetch('/api/v1/operation/get_rate_info/?user_id=' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var courses = data.rates || data;
+      containers.forEach(function(c) { renderCourses(c, courses); });
+    })
+    .catch(function(e) {
+      console.error('[courses] fetch error:', e);
+      containers.forEach(function(c) {
+        c.innerHTML = '<div class="pp-courses__item"><span class="pp-courses__name">Ошибка загрузки</span></div>';
+      });
+    });
+})();
+</script>
 
 {{ block.super }}
 {% endblock %}
