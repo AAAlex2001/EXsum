@@ -567,11 +567,34 @@
     padding-right: 0 !important;
   }
 
+  #content { max-width: none !important; width: 100% !important; padding: 0 !important; }
+  #content.container { max-width: none !important; }
+  #main .container { max-width: none !important; }
+  #content-main,
+  #content-main > div,
+  #content-main > div > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
   /* changelist */
   #changelist {
     font-family: 'Inter', sans-serif;
     margin: 0 !important;
     padding: 16px 0 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  #changelist > .result-list-wrapper,
+  #changelist > .result-list-wrapper > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   #changelist > .result-list-wrapper {
     padding: 0 !important;
@@ -607,7 +630,29 @@
     background: #FFFFFF;
     padding: 0 !important;
   }
-  #changelist-form .actions { display: none !important; }
+  #changelist-form .actions {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 8px 16px !important;
+    margin: 0 !important;
+  }
+  #changelist-form .actions > label,
+  #changelist-form .actions > select,
+  #changelist-form .actions > button,
+  #changelist-form .actions > .action-counter,
+  #changelist-form .actions > span { display: none !important; }
+  #changelist-form .actions #sum-info {
+    display: inline-block !important;
+    color: #FFFFFF;
+    background-color: #079669;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+  }
 
   /* низ карточки */
   #changelist-form > div[data-simplebar] {

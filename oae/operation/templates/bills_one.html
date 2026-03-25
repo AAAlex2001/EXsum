@@ -927,7 +927,11 @@
   .dark .df-separator-arrow path { fill: #374151; }
   .dark .df-add-btn svg path { stroke: #E5E7EB; }
 
-  #content { padding-top: 0 !important; padding-bottom: 0 !important; }
+  #content { max-width: none !important; width: 100% !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+  #content.container { max-width: none !important; }
+  div:has(> #content) { padding-left: 32px !important; padding-right: 32px !important; padding-bottom: 32px !important; }
+  #main > .px-4 { padding-left: 32px !important; padding-right: 32px !important; }
+  #main .container { max-width: none !important; }
   #content > .flex.items-start { margin: 0 !important; padding: 0 !important; }
 </style>
 {% endblock %}
