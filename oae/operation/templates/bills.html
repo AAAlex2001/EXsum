@@ -55,6 +55,7 @@
     gap: 6px;
     height: 32px;
     background: #FFFFFF;
+    text-decoration: none;
     border: 1px solid #DEE2EA;
     border-radius: 9999px;
     cursor: pointer;
@@ -929,7 +930,7 @@
   <div class="pp-title-bar">
     <span class="pp-title-bar__text">Сделки</span>
     <div class="pp-title-bar__actions">
-      <button class="pp-btn" onclick="location.href='?recount=1'" type="button">
+      <a class="pp-btn" href="calculate-rate/">
         <span class="pp-btn__icon">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M17.5 13.3333V10H10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
@@ -938,8 +939,8 @@
           </svg>
         </span>
         <div class="pp-btn__label"><span>Пересчитать</span></div>
-      </button>
-      <button class="pp-btn" onclick="location.href='?recount500=1'" type="button">
+      </a>
+      <a class="pp-btn" href="calculate-rate-500/">
         <span class="pp-btn__icon">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M17.5 13.3333V10H10" stroke="#4B5563" stroke-width="2" stroke-linecap="round"/>
@@ -948,7 +949,7 @@
           </svg>
         </span>
         <div class="pp-btn__label"><span>Пересчитать 500</span></div>
-      </button>
+      </a>
     </div>
   </div>
 
@@ -1352,5 +1353,31 @@
     })
   </script>
   <script src="{% static 'operation/custom_admin.js' %}"></script>
+
+  <script>
+  (function() {
+    function initHorizontalWheel() {
+      var form = document.getElementById('changelist-form');
+      if (!form) return;
+      form.addEventListener('wheel', function(e) {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        var scrollEl = form.querySelector('.simplebar-content-wrapper') ||
+                       form.querySelector('[data-simplebar]');
+        if (!scrollEl) return;
+        var atLeft  = scrollEl.scrollLeft <= 0;
+        var atRight = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 1;
+        if (atLeft && e.deltaY < 0) return;
+        if (atRight && e.deltaY > 0) return;
+        e.preventDefault();
+        scrollEl.scrollLeft += e.deltaY * 1.5;
+      }, { passive: false });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHorizontalWheel);
+    } else {
+      initHorizontalWheel();
+    }
+  })();
+  </script>
 
 {% endblock %}

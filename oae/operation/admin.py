@@ -299,11 +299,34 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
     )
     inlines = [IncomeExpenseInline, ContractorDebtOperationInline,]
 
-    # actions_list disabled — custom buttons in bills.html template
+    # actions_list disabled — URL-ы регистрируются через get_urls(), кнопки в bills.html
     # actions_list = ["calculate_rate", "calculate_rate_500"]
 
     actions_detail = ['history_detail', ]
     actions = ["make_is_closed", "clone_deal", "bulk_update_category_contractor", "export_xlsx"]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'contractor' in form.base_fields:
+            form.base_fields['contractor'].required = False
+        return form
+
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'calculate-rate/',
+                self.admin_site.admin_view(self.calculate_rate),
+                name='operation_deal_calculate_rate',
+            ),
+            path(
+                'calculate-rate-500/',
+                self.admin_site.admin_view(self.calculate_rate_500),
+                name='operation_deal_calculate_rate_500',
+            ),
+        ]
+        return custom_urls + urls
 
 
 
@@ -563,7 +586,7 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
 
     clone_deal.short_description = 'Дублировать'
 
-    @action(description="Пересчитать 500", icon="key", url_path="calculate-rate")
+    @action(description="Пересчитать 500", icon="key", url_path="calculate-rate-500")
     def calculate_rate_500(self, request: HttpRequest):
         from .tasks import recalculate_courses_dutys_500
         recalculate_courses_dutys_500.delay()

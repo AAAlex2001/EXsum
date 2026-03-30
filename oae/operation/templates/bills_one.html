@@ -718,11 +718,11 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    gap: 4px;
+    padding: 8px 12px;
+    gap: 10px;
     flex: 1;
     min-width: 0;
-    height: 46px;
+    min-height: 46px;
     background: #F8F8F8;
     border-radius: 20px;
     box-sizing: border-box;
@@ -739,6 +739,27 @@
     font-size: 18px;
     color: #101827;
   }
+
+  .df-debt-contractor-sel {
+    flex: 1;
+    min-width: 140px;
+    max-width: 260px;
+    height: 30px;
+    border: 1px solid #DEE2EA;
+    border-radius: 12px;
+    padding: 0 28px 0 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #101827;
+    background: #FFFFFF url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+  }
+  .df-debt-contractor-sel:focus { border-color: #079669; box-shadow: 0 0 0 2px rgba(7,150,105,0.15); }
+  .dark .df-debt-contractor-sel { background-color: #374151; border-color: #4B5563; color: #F9FAFB; }
 
   .df-bottom-3 {
     display: flex !important;
@@ -980,17 +1001,13 @@
 
   <script>
   (function() {
-    console.log('[df] script start');
     function init() {
       try {
-      console.log('[df] init called');
       var form = document.getElementById('deal_form') || document.querySelector('#content-main form') || document.querySelector('form');
-      if (!form) { console.warn('[df] no form'); return; }
-      console.log('[df] form id:', form.id, 'fieldsets:', form.querySelectorAll('fieldset').length);
+      if (!form) return;
 
       var mainFieldset = null;
       var allFs = document.querySelectorAll('#content-main fieldset');
-      console.log('[df] #content-main fieldsets:', allFs.length);
       allFs.forEach(function(fs) {
         var h2 = fs.querySelector('h2');
         if (h2 && /Основные/i.test(h2.textContent)) mainFieldset = fs;
@@ -1000,7 +1017,7 @@
       if (!mainFieldset) {
         mainFieldset = document.querySelector('#content-main fieldset, fieldset.module');
       }
-      if (!mainFieldset) { console.warn('[df] no fieldset found anywhere'); return; }
+      if (!mainFieldset) { return; }
 
       var aligned = mainFieldset.querySelector('.aligned') || mainFieldset;
       var tabsDiv = document.getElementById('df-tabs');
@@ -1118,7 +1135,6 @@
               var djText = dw.textContent.trim();
               document.querySelectorAll('.df-datetime-warning span').forEach(function(sp) { sp.textContent = djText; });
               clearInterval(_tzInterval);
-              console.log('[df] timezone: заменено на Django текст:', djText);
             }
             if (_tzAttempts >= 50) clearInterval(_tzInterval);
           }, 100);
@@ -1129,7 +1145,6 @@
       } catch(e) { console.error('[df] datetime:', e); }
 
       var closedCheckbox = form.querySelector('input[name="closed"]');
-      console.log('[df] closed:', closedCheckbox ? closedCheckbox.type : 'NOT FOUND');
 
       var infoBar = document.createElement('div');
       infoBar.className = 'df-contractor-info df-tab-hidden';
@@ -1145,13 +1160,6 @@
           .then(function(d) { infoValue.textContent = d.cashflow_bill || '\u2014'; })
           .catch(function() { infoValue.textContent = '\u2014'; });
       }
-      var cSelect = form.querySelector('select[name="contractor"]');
-      if (cSelect) {
-        cSelect.addEventListener('change', loadContractorBalance);
-        if (cSelect.tomselect) cSelect.tomselect.on('change', loadContractorBalance);
-        loadContractorBalance();
-      }
-
       try {
         var formRows = aligned.querySelectorAll('.form-row');
         var rateRow = null, dutyRow = null, natRow = null, deal1cRow = null;
@@ -1161,7 +1169,6 @@
           if (row.querySelector('.field-national_currency')) natRow = row;
           if (row.querySelector('.field-deal_1c')) deal1cRow = row;
         });
-        console.log('[df] bottom:', !!rateRow, !!dutyRow, !!natRow, !!deal1cRow);
         var wrapper = document.createElement('div');
         wrapper.className = 'df-bottom-3';
         wrapper.style.order = '11';
@@ -1174,7 +1181,35 @@
 
       var ieGroup = document.getElementById('deal_data-group');
       var debtGroup = document.getElementById('debt_operations-group');
-      console.log('[df] inlines:', !!ieGroup, !!debtGroup);
+
+      var dcSel = null;
+      if (debtGroup) {
+        var tmplContSel = debtGroup.querySelector('tbody.empty-form select[name$="-contractor"]') ||
+                          debtGroup.querySelector('select[name$="-contractor"]');
+        if (tmplContSel) {
+          dcSel = document.createElement('select');
+          dcSel.className = 'df-debt-contractor-sel';
+          Array.from(tmplContSel.options).forEach(function(o) { dcSel.appendChild(o.cloneNode(true)); });
+          var firstInlineSel = debtGroup.querySelector('tbody:not(.empty-form) select[name$="-contractor"]');
+          if (firstInlineSel && firstInlineSel.value) dcSel.value = firstInlineSel.value;
+          infoBar.insertBefore(dcSel, infoBar.firstChild);
+          dcSel.addEventListener('change', function() {
+            var val = dcSel.value;
+            debtGroup.querySelectorAll('tbody:not(.empty-form) select[name$="-contractor"]').forEach(function(s) {
+              s.value = val;
+              if (s.tomselect) s.tomselect.setValue(val, true);
+            });
+            loadContractorBalanceById(val);
+          });
+        }
+      }
+      function loadContractorBalanceById(id) {
+        if (!id) { infoValue.textContent = '\u2014'; return; }
+        fetch('/api/v1/operation/get_cashflow_balance/?contractor_id=' + id)
+          .then(function(r) { return r.json(); })
+          .then(function(d) { infoValue.textContent = d.cashflow_bill || '\u2014'; })
+          .catch(function() { infoValue.textContent = '\u2014'; });
+      }
 
       var groupTitles = {};
       if (ieGroup) groupTitles[ieGroup.id] = '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430';
@@ -1212,9 +1247,7 @@
             }
           }
         }
-        console.log('[df] addLink for', group.id, ':', !!origLink, origLink ? origLink.className : '-');
         if (!origLink) {
-          console.log('[df] no add link. tfoot:', group.querySelectorAll('tfoot').length, 'a:', group.querySelectorAll('a').length);
           return;
         }
         var origParent = origLink.closest('tfoot') || origLink.closest('.add-row')?.parentElement || origLink.parentElement;
@@ -1228,7 +1261,6 @@
           origLink.click();
         });
         group.appendChild(btn);
-        console.log('[df] add-btn created for', group.id);
       }
       createAddButton(ieGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0442\u0440\u043E\u043A\u0443');
       createAddButton(debtGroup, '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u0435');
@@ -1348,35 +1380,18 @@
           });
           if (hasNewTbody) {
             rebuildActionBars(g);
+            if (g === debtGroup && dcSel && dcSel.value) {
+              g.querySelectorAll('tbody:not(.empty-form) select[name$="-contractor"]').forEach(function(s) {
+                if (!s.value) {
+                  s.value = dcSel.value;
+                  if (s.tomselect) s.tomselect.setValue(dcSel.value, true);
+                }
+              });
+            }
           }
         }).observe(table, { childList: true });
       });
 
-      var mainContractor = form.querySelector('select[name="contractor"]');
-      function syncContractorToInlines() {
-        if (!mainContractor) return;
-        var val = mainContractor.value;
-        document.querySelectorAll('#debt_operations-group tbody:not(.empty-form)').forEach(function(tbody) {
-          var contractorSel = tbody.querySelector('select[name$="-contractor"]');
-          if (!contractorSel || contractorSel === mainContractor) return;
-          var hasData = false;
-          tbody.querySelectorAll('input, select, textarea').forEach(function(field) {
-            if (field.type === 'hidden' || field.type === 'checkbox') return;
-            if (field === contractorSel) return;
-            if (field.name && field.name.indexOf('-contractor') !== -1) return;
-            if (field.name && (field.name.indexOf('-operation_type') !== -1 || field.name.indexOf('-percent') !== -1 || field.name.indexOf('-currency') !== -1)) return;
-            if (field.name && field.name.indexOf('-DELETE') !== -1) return;
-            if (field.value && field.value.trim() !== '' && field.value.trim() !== '0') hasData = true;
-          });
-          if (hasData && val) {
-            contractorSel.value = val;
-            if (contractorSel.tomselect) {
-              contractorSel.tomselect.setValue(val, true);
-            }
-          }
-        });
-      }
-      form.addEventListener('submit', function() { syncContractorToInlines(); });
 
       if (debtGroup) debtGroup.classList.add('df-hidden');
 
@@ -1397,17 +1412,15 @@
             if (debtGroup) debtGroup.classList.add('df-hidden');
           } else {
             mainFieldset.querySelectorAll('.form-row').forEach(function(row) {
-              if (row.querySelector('.field-contractor') || row.querySelector('[name="contractor"]') || row.querySelector('select[name="contractor"]')) {
-                row.classList.remove('df-contractor-hidden');
-              } else {
-                row.classList.add('df-contractor-hidden');
-              }
+              row.classList.add('df-contractor-hidden');
             });
             hdr.classList.add('df-contractor-hidden');
             var btm3 = aligned.querySelector('.df-bottom-3');
             if (btm3) btm3.classList.add('df-contractor-hidden');
             mainFieldset.classList.add('df-contractor-mode');
             infoBar.classList.remove('df-tab-hidden');
+            if (dcSel) loadContractorBalanceById(dcSel.value);
+            else infoValue.textContent = '\u2014';
             if (ieGroup) ieGroup.classList.add('df-hidden');
             if (debtGroup) debtGroup.classList.remove('df-hidden');
           }
@@ -1461,38 +1474,28 @@
         contentEl.querySelectorAll(':scope > div').forEach(function(div) {
           if (div.classList.contains('items-start') && div.classList.contains('flex')) {
             div.style.setProperty('display', 'none', 'important');
-            console.log('[df] hidden unfold tab-bar');
           }
         });
       }
-      document.querySelectorAll('.errorlist li, .errornote').forEach(function(el) {
-        var parent = el.closest('[class*="field-"]') || el.closest('.inline-related') || el.parentElement;
-        console.log('[df] ERROR:', parent ? parent.className : 'non-field', '|', el.textContent.trim());
-      });
       if (debtGroup && debtGroup.querySelector('.errorlist')) {
-        console.log('[df] \u041E\u0448\u0438\u0431\u043A\u0438 \u0432 debt_operations \u2014 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u044E \u0442\u0430\u0431');
         if (tabsDiv) {
           tabsDiv.querySelectorAll('.df-tab').forEach(function(t) {
             t.classList.toggle('df-tab--active', t.dataset.tab === 'contractor');
           });
           mainFieldset.querySelectorAll('.form-row').forEach(function(row) {
-            if (row.querySelector('.field-contractor') || row.querySelector('[name="contractor"]') || row.querySelector('select[name="contractor"]')) {
-              row.classList.remove('df-contractor-hidden');
-            } else {
-              row.classList.add('df-contractor-hidden');
-            }
+            row.classList.add('df-contractor-hidden');
           });
           hdr.classList.add('df-contractor-hidden');
           var btm3 = aligned.querySelector('.df-bottom-3');
           if (btm3) btm3.classList.add('df-contractor-hidden');
           mainFieldset.classList.add('df-contractor-mode');
           infoBar.classList.remove('df-tab-hidden');
+          if (dcSel) loadContractorBalanceById(dcSel.value);
+          else infoValue.textContent = '\u2014';
           if (ieGroup) ieGroup.classList.add('df-hidden');
           if (debtGroup) debtGroup.classList.remove('df-hidden');
         }
       }
-      console.log('[df] tfoot ie:', document.querySelectorAll('#deal_data-group tfoot a').length, 'debt:', document.querySelectorAll('#debt_operations-group tfoot a').length);
-      console.log('[df] init DONE');
       } catch(e) { console.error('[df] FATAL:', e.message, e.stack); }
     }
 
