@@ -420,7 +420,6 @@
     padding: 0;
     gap: 8px;
     overflow-x: auto;
-    scroll-behavior: smooth;
     scrollbar-width: none;
     -ms-overflow-style: none;
     isolation: isolate;
@@ -1357,20 +1356,21 @@
   <script>
   (function() {
     function initHorizontalWheel() {
-      var form = document.getElementById('changelist-form');
-      if (!form) return;
-      form.addEventListener('wheel', function(e) {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        var scrollEl = form.querySelector('.simplebar-content-wrapper') ||
-                       form.querySelector('[data-simplebar]');
-        if (!scrollEl) return;
-        var atLeft  = scrollEl.scrollLeft <= 0;
-        var atRight = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 1;
-        if (atLeft && e.deltaY < 0) return;
-        if (atRight && e.deltaY > 0) return;
-        e.preventDefault();
-        scrollEl.scrollLeft += e.deltaY * 1.5;
-      }, { passive: false });
+      var carousels = document.querySelectorAll('.pp-carousel');
+      if (!carousels.length) return;
+
+      carousels.forEach(function(carousel) {
+        carousel.addEventListener('wheel', function(e) {
+          if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+          var atLeft = carousel.scrollLeft <= 0;
+          var atRight = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 1;
+          if (atLeft && e.deltaY < 0) return;
+          if (atRight && e.deltaY > 0) return;
+          var delta = Math.max(-120, Math.min(120, e.deltaY));
+          e.preventDefault();
+          carousel.scrollLeft += delta * 1.2;
+        }, { passive: false });
+      });
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initHorizontalWheel);
