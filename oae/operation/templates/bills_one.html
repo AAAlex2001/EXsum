@@ -760,6 +760,35 @@
   }
   .df-debt-contractor-sel:focus { border-color: #079669; box-shadow: 0 0 0 2px rgba(7,150,105,0.15); }
   .dark .df-debt-contractor-sel { background-color: #374151; border-color: #4B5563; color: #F9FAFB; }
+  .df-debt-contractor-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 10px;
+    min-height: 46px;
+    background: #F8F8F8;
+    border-radius: 20px;
+    box-sizing: border-box;
+    margin: 8px 0;
+  }
+  .dark .df-debt-contractor-row { background: #1F2937; }
+  .df-debt-contractor-row .df-contractor-info-label {
+    font-weight: 500;
+    font-size: 12px;
+    color: #AAAFB9;
+  }
+  .dark .df-debt-contractor-row .df-contractor-info-label { color: #6B7280; }
+  .df-debt-contractor-balance {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 17px;
+    color: #101827;
+    white-space: nowrap;
+  }
+  .dark .df-debt-contractor-balance { color: #F9FAFB; }
 
   .df-bottom-3 {
     display: flex !important;
@@ -791,7 +820,6 @@
   .errorlist li { display: block !important; color: #FF5E5E !important; font-family: 'Inter', sans-serif; font-size: 11px; line-height: 13px; }
   .errornote { display: block !important; color: #FF5E5E !important; font-family: 'Inter', sans-serif; font-size: 13px; margin-bottom: 8px !important; }
 
-  .object-tools { display: none !important; }
   .timezonewarning { display: none !important; }
   .df-datetime-warning { display: flex !important; }
   .datetimeshortcuts { display: none !important; }
@@ -953,12 +981,12 @@
   div:has(> #content) { padding-left: 32px !important; padding-right: 32px !important; padding-bottom: 32px !important; }
   #main > .px-4 { padding-left: 32px !important; padding-right: 32px !important; }
   #main .container { max-width: none !important; }
-  #content > .flex.items-start { margin: 0 !important; padding: 0 !important; }
+  #content > .flex.items-start { margin: 0 !important; padding: 0 !important; display: flex !important; margin-bottom: 10px !important; }
 </style>
 {% endblock %}
 
-{% block object-tools %}{% endblock %}
-{% block object-tools-items %}{% endblock %}
+{% block object-tools %}{{ block.super }}{% endblock %}
+{% block object-tools-items %}{{ block.super }}{% endblock %}
 {% block nav-global %}{% endblock %}
 {% block nav-global-side %}{% endblock %}
 
@@ -1183,9 +1211,10 @@
       var debtGroup = document.getElementById('debt_operations-group');
 
       var dcSel = null;
+      var tmplContSel = null;
       if (debtGroup) {
-        var tmplContSel = debtGroup.querySelector('tbody.empty-form select[name$="-contractor"]') ||
-                          debtGroup.querySelector('select[name$="-contractor"]');
+        tmplContSel = debtGroup.querySelector('tbody.empty-form select[name$="-contractor"]') ||
+                      debtGroup.querySelector('select[name$="-contractor"]');
         if (tmplContSel) {
           dcSel = document.createElement('select');
           dcSel.className = 'df-debt-contractor-sel';
@@ -1195,10 +1224,14 @@
           infoBar.insertBefore(dcSel, infoBar.firstChild);
           dcSel.addEventListener('change', function() {
             var val = dcSel.value;
-            debtGroup.querySelectorAll('tbody:not(.empty-form) select[name$="-contractor"]').forEach(function(s) {
-              s.value = val;
-              if (s.tomselect) s.tomselect.setValue(val, true);
-            });
+            var firstTbody = debtGroup.querySelector('tbody:not(.empty-form)');
+            if (firstTbody) {
+              var firstSel = firstTbody.querySelector('select[name$="-contractor"]');
+              if (firstSel) {
+                firstSel.value = val;
+                if (firstSel.tomselect) firstSel.tomselect.setValue(val, true);
+              }
+            }
             loadContractorBalanceById(val);
           });
         }
@@ -1210,7 +1243,13 @@
           .then(function(d) { infoValue.textContent = d.cashflow_bill || '\u2014'; })
           .catch(function() { infoValue.textContent = '\u2014'; });
       }
-
+      function fetchContractorBalanceById(id, onDone) {
+        if (!id) { onDone('\u2014'); return; }
+        fetch('/api/v1/operation/get_cashflow_balance/?contractor_id=' + id)
+          .then(function(r) { return r.json(); })
+          .then(function(d) { onDone(d.cashflow_bill || '\u2014'); })
+          .catch(function() { onDone('\u2014'); });
+      }
       var groupTitles = {};
       if (ieGroup) groupTitles[ieGroup.id] = '\u0421\u0443\u043C\u043C\u044B \u0438 \u0441\u0447\u0435\u0442\u0430';
       if (debtGroup) groupTitles[debtGroup.id] = '\u0414\u0432\u0438\u0436\u0435\u043D\u0438\u044F \u043A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u043E\u0432';
@@ -1222,14 +1261,80 @@
         el.innerHTML = '<span class="df-section-title">' + title + '</span><div class="df-section-line"></div>';
         tbody.insertBefore(el, tbody.firstChild);
       }
+      function mountDebtContractorRow(tbody, force) {
+        if (!debtGroup || !tbody) return;
+        if (tbody.dataset.dfContractorMounted === '1') return;
 
+        if (!force) {
+          var idInput = tbody.querySelector('input[name$="-id"]');
+          if (!idInput || !idInput.value) return;
+          var savedTbodies = Array.from(debtGroup.querySelectorAll('tbody:not(.empty-form)')).filter(function(tb) {
+            var tid = tb.querySelector('input[name$="-id"]');
+            return tb.querySelector('.form-row') && tid && tid.value;
+          });
+          if (savedTbodies.indexOf(tbody) <= 0) return;
+        }
+
+        tbody.dataset.dfContractorMounted = '1';
+
+        var inlineSel = tbody.querySelector('select[name$="-contractor"]');
+        if (!inlineSel) return;
+
+        var row = document.createElement('div');
+        row.className = 'df-debt-contractor-row';
+
+        var sel = document.createElement('select');
+        sel.className = 'df-debt-contractor-sel';
+        var source = tmplContSel || inlineSel;
+        Array.from(source.options).forEach(function(o) { sel.appendChild(o.cloneNode(true)); });
+
+        var lbl = document.createElement('span');
+        lbl.className = 'df-contractor-info-label';
+        lbl.textContent = '\u0421\u0447\u0435\u0442 \u041A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442\u0430';
+
+        var balance = document.createElement('span');
+        balance.className = 'df-contractor-info-value';
+        balance.textContent = '\u2014';
+
+        var currentValue = inlineSel.value || '';
+        if (!currentValue && dcSel && dcSel.value) currentValue = dcSel.value;
+        if (currentValue) {
+          inlineSel.value = currentValue;
+          if (inlineSel.tomselect) inlineSel.tomselect.setValue(currentValue, true);
+          sel.value = currentValue;
+        }
+
+        function updateBalance() {
+          fetchContractorBalanceById(sel.value, function(value) { balance.textContent = value; });
+        }
+
+        sel.addEventListener('change', function() {
+          inlineSel.value = sel.value;
+          if (inlineSel.tomselect) inlineSel.tomselect.setValue(sel.value, true);
+          updateBalance();
+        });
+        inlineSel.addEventListener('change', function() {
+          sel.value = inlineSel.value || '';
+          updateBalance();
+        });
+
+        row.appendChild(sel);
+        row.appendChild(lbl);
+        row.appendChild(balance);
+
+        tbody.parentNode.insertBefore(row, tbody);
+        updateBalance();
+      }
       [ieGroup, debtGroup].forEach(function(g) {
         if (!g) return;
         g.querySelectorAll('tbody:not(.empty-form)').forEach(function(tb) {
-          if (tb.querySelector('.form-row')) {
-            tb.classList.add('df-form-visible');
-            addSectionHeader(tb, groupTitles[g.id]);
-          }
+          if (!tb.querySelector('.form-row')) return;
+          var idInput = tb.querySelector('input[name$="-id"]');
+          var hasSavedData = idInput && idInput.value;
+          if (g === debtGroup && !hasSavedData) return;
+          tb.classList.add('df-form-visible');
+          addSectionHeader(tb, groupTitles[g.id]);
+          if (g === debtGroup) mountDebtContractorRow(tb);
         });
       });
 
@@ -1374,6 +1479,7 @@
               if (node.nodeName === 'TBODY' && !node.classList.contains('empty-form')) {
                 node.classList.add('df-form-visible');
                 addSectionHeader(node, groupTitles[g.id]);
+                if (g === debtGroup) mountDebtContractorRow(node, true);
                 hasNewTbody = true;
               }
             });
@@ -1473,7 +1579,9 @@
       if (contentEl) {
         contentEl.querySelectorAll(':scope > div').forEach(function(div) {
           if (div.classList.contains('items-start') && div.classList.contains('flex')) {
-            div.style.setProperty('display', 'none', 'important');
+            if (!div.querySelector('.object-tools') && !div.querySelector('a[href*="history"]')) {
+              div.style.setProperty('display', 'none', 'important');
+            }
           }
         });
       }
