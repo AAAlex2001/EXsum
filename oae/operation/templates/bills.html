@@ -406,6 +406,20 @@
     white-space: nowrap;
     text-align: right;
   }
+  .pp-accounts__war-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    color: #5E6773;
+    white-space: nowrap;
+  }
+  .dark .pp-accounts__war-info { color: #9CA3AF; }
 
   /* карусель контрагентов */
   .pp-carousel-wrap {
@@ -1035,10 +1049,16 @@
             {% if not forloop.first %}
               <div class="pp-accounts__divider"></div>
             {% endif %}
-            <div class="pp-accounts__row">
+            <div class="pp-accounts__row" data-bill-name="{{ bill.name }}">
               <a href="{% url 'admin:catalog_bill_change' bill.id %}">
                 <div class="pp-accounts__name-wrap">
-                  {% if bill.currency.short_name == 'USDT' %}
+                  {% if 'Япония' in bill.name or 'япония' in bill.name %}
+                    <span class="pp-accounts__flag">🇯🇵</span>
+                  {% elif 'Китай' in bill.name or 'китай' in bill.name %}
+                    <span class="pp-accounts__flag">🇨🇳</span>
+                  {% elif 'Корея' in bill.name or 'корея' in bill.name or 'КОРЕЯ' in bill.name %}
+                    <span class="pp-accounts__flag">🇰🇷</span>
+                  {% elif bill.currency.short_name == 'USDT' %}
                     <span class="pp-accounts__flag">🇦🇪</span>
                   {% elif bill.currency.short_name == 'USD' %}
                     <span class="pp-accounts__flag">🇺🇸</span>
@@ -1048,6 +1068,7 @@
                   <span class="pp-accounts__name">{{ bill.name }}</span>
                 </div>
                 <div class="pp-accounts__values">
+                  <span class="pp-accounts__war-info"></span>
                   <span class="pp-accounts__amount">
                     {{ bill.remainder|floatformat:3 }}
                     {% if bill.currency.short_name == 'USDT' %} ₮{% elif bill.currency.short_name == 'USD' %} ${% else %} ₽{% endif %}
@@ -1177,9 +1198,15 @@
             {% if not forloop.first %}
               <div class="pp-accounts__divider"></div>
             {% endif %}
-            <div class="pp-accounts__row">
+            <div class="pp-accounts__row" data-bill-name="{{ bill.name }}">
               <div class="pp-accounts__name-wrap">
-                {% if bill.currency.short_name == 'USDT' %}
+                {% if 'Япония' in bill.name or 'япония' in bill.name %}
+                  <span class="pp-accounts__flag">🇯🇵</span>
+                {% elif 'Китай' in bill.name or 'китай' in bill.name %}
+                  <span class="pp-accounts__flag">🇨🇳</span>
+                {% elif 'Корея' in bill.name or 'корея' in bill.name or 'КОРЕЯ' in bill.name %}
+                  <span class="pp-accounts__flag">🇰🇷</span>
+                {% elif bill.currency.short_name == 'USDT' %}
                   <span class="pp-accounts__flag">🇦🇪</span>
                 {% elif bill.currency.short_name == 'USD' %}
                   <span class="pp-accounts__flag">🇺🇸</span>
@@ -1189,6 +1216,7 @@
                 <span class="pp-accounts__name">{{ bill.name }}</span>
               </div>
               <div class="pp-accounts__values">
+                <span class="pp-accounts__war-info"></span>
                 <span class="pp-accounts__amount">
                   {{ bill.remainder|floatformat:3 }}
                   {% if bill.currency.short_name == 'USDT' %} ₮{% elif bill.currency.short_name == 'USD' %} ${% else %} ₽{% endif %}
@@ -1326,6 +1354,38 @@
         c.innerHTML = '<div class="pp-courses__item"><span class="pp-courses__name">Ошибка загрузки</span></div>';
       });
     });
+})();
+</script>
+
+<script>
+(function() {
+  var warBillNames = [];
+  var rows = document.querySelectorAll('.pp-accounts__row[data-bill-name]');
+  rows.forEach(function(row) {
+    var name = row.getAttribute('data-bill-name') || '';
+    var lower = name.toLowerCase();
+    if (lower.indexOf('япония') !== -1 || lower.indexOf('китай') !== -1 ||
+        lower.indexOf('japan') !== -1 || lower.indexOf('china') !== -1) {
+      warBillNames.push({ row: row, name: name });
+    }
+  });
+  warBillNames.forEach(function(item) {
+    fetch('/api/v1/operation/get_war_balance/?bill_name=' + encodeURIComponent(item.name))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var rate = parseFloat(d.rate) || 0;
+        var remainder = parseFloat(d.remainder) || 0;
+        var infoEl = item.row.querySelector('.pp-accounts__war-info');
+        if (!infoEl) return;
+        var lower = item.name.toLowerCase();
+        var currLabel = 'CNY';
+        if (lower.indexOf('япония') !== -1 || lower.indexOf('japan') !== -1) currLabel = 'JPY';
+        var fmtRemainder = remainder.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+        var fmtRate = rate.toFixed(1);
+        infoEl.innerHTML = '(' + fmtRemainder + ' ' + currLabel + ') <span>(' + fmtRate + ')</span>';
+      })
+      .catch(function() {});
+  });
 })();
 </script>
 

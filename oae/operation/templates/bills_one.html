@@ -178,7 +178,42 @@
   .form-row:has(.field-cashflow)    { order: 5; }
   .form-row:has(.field-comment)     { order: 6; }
   .form-row:has(.field-rate)        { order: 7; }
-  .form-row:has(.field-by_nikita)   { order: 8; }
+  .form-row:has(.field-by_nikita)   { order: 8; display: none !important; }
+  .df-rate-conversion-row {
+    order: 8;
+    padding: 6px 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .df-rate-conversion-row label {
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: #1E1E1E !important;
+    margin-bottom: 4px !important;
+    display: block;
+  }
+  .df-rate-conversion-row input {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 38px;
+    border: 1px solid #DEE2EA;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #101827;
+    background: #FFFFFF;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .df-rate-conversion-row input:focus {
+    border-color: #079669;
+    box-shadow: 0 0 0 2px rgba(7,150,105,0.15);
+  }
+  .dark .df-rate-conversion-row label { color: #D1D5DB !important; }
+  .dark .df-rate-conversion-row input { background: #1F2937; border-color: #374151; color: #F9FAFB; }
   .form-row:has(.field-rate_contractors) { order: 9; }
   .form-row:has(.field-duty_deal)   { order: 10; }
   .form-row:has(.field-national_currency) { order: 10; }
@@ -589,6 +624,7 @@
   #deal_data-group td.field-calculated,
   #deal_data-group td.field-rate_calculated,
   #deal_data-group td.field-transaction_id,
+  #deal_data-group td.field-rate_conversion,
   #deal_data-group td.field-deal { display: none !important; }
 
   #deal_data-group td.field-income_amount {
@@ -1210,6 +1246,31 @@
       var ieGroup = document.getElementById('deal_data-group');
       var debtGroup = document.getElementById('debt_operations-group');
 
+      if (ieGroup) {
+        var rcInput = ieGroup.querySelector('input[name$="-rate_conversion"]');
+        if (rcInput) {
+          var rcRow = document.createElement('div');
+          rcRow.className = 'df-rate-conversion-row';
+          var rcLabel = document.createElement('label');
+          rcLabel.textContent = 'Курс конвертации';
+          var rcField = document.createElement('input');
+          rcField.type = 'number';
+          rcField.step = '1e-8';
+          rcField.value = rcInput.value || '0.0';
+          rcRow.appendChild(rcLabel);
+          rcRow.appendChild(rcField);
+          aligned.appendChild(rcRow);
+          rcField.addEventListener('input', function() {
+            ieGroup.querySelectorAll('input[name$="-rate_conversion"]').forEach(function(inp) {
+              inp.value = rcField.value;
+            });
+          });
+          rcInput.addEventListener('change', function() {
+            rcField.value = rcInput.value;
+          });
+        }
+      }
+
       var dcSel = null;
       var tmplContSel = null;
       if (debtGroup) {
@@ -1493,6 +1554,14 @@
                   if (s.tomselect) s.tomselect.setValue(dcSel.value, true);
                 }
               });
+            }
+            if (g === ieGroup) {
+              var rcMainInput = document.querySelector('.df-rate-conversion-row input');
+              if (rcMainInput) {
+                g.querySelectorAll('input[name$="-rate_conversion"]').forEach(function(inp) {
+                  inp.value = rcMainInput.value;
+                });
+              }
             }
           }
         }).observe(table, { childList: true });
