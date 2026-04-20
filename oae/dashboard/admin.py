@@ -556,7 +556,7 @@ def report_view(request):
                 total_rate = '{0} '.format(str(Decimal(total_sum).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
                 total_data = {'total_income': total_income, 'total_expense': total_expense, 'total_rate': total_rate}
             elif selected_type == 'delivery':
-                deals = Deal.objects.filter(Q(contractor_id=1) | Q(debt_operations__contractor_id=1), date_create__gte=date_from, date_create__lte=date_to, closed=True).exclude(cashflow__id=22)#category__id__in=[4]
+                deals = Deal.objects.filter(Q(contractor_id=1) | Q(debt_operations__contractor_id=1), date_create__gte=date_from, date_create__lte=date_to, closed=True).exclude(cashflow__id__in=[22,23,24,25,26])#category__id__in=[4]
                 incomes = []
                 expenses = []
 
@@ -680,7 +680,269 @@ def report_view(request):
             elif selected_type == 'delivery':
                 deals = Deal.objects.filter(Q(contractor_id=1) | Q(debt_operations__contractor_id=1),
                                             date_create__gte=date_from, date_create__lte=date_to, closed=True, cashflow__name='ДОСТАВКА КОРЕЯ').exclude(
-                    cashflow__id=22)  # category__id__in=[4]
+                    cashflow__id__in=[23,24])  # category__id__in=[4]
+                incomes = []
+                expenses = []
+
+                for deal in deals:
+                    income = 0
+                    expense = 0
+                    if IncomeExpense.objects.filter(deal=deal).count() != 0:
+                        in_ex = IncomeExpense.objects.filter(deal=deal).first()
+                        deal_id = deal.id
+                        date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                        type = 'Доставка'
+                        if deal.national_currency:
+                            income = deal.national_currency
+                            incomes.append(income)
+                        else:
+                            if in_ex.income_account:
+                                if in_ex.income_account.currency.short_name == 'RUB':
+                                    income = in_ex.income_amount
+                                    incomes.append(income)
+                                else:
+                                    continue
+                            else:
+                                continue
+                        expense = in_ex.expense_amount
+                        if expense == 0:
+                            expense = int(0)
+                        expenses.append(expense)
+                        link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                        deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                        if deal.deal_1c:
+                            deal_1c = deal.deal_1c
+                        else:
+                            deal_1c = '-'
+                        data.append(
+                            {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                             'rate': '', 'deal_1c': deal_1c})
+                    elif ContractorDebtOperation.objects.filter(deal=deal).count() != 0:
+                        if ContractorDebtOperation.objects.filter(
+                                deal=deal).count() >= 2 and ContractorDebtOperation.objects.filter(deal=deal,
+                                                                                                   contractor__id=1,
+                                                                                                   operation_type='write_on').count() != 0:
+                            in_ex = IncomeExpense.objects.filter(deal=deal).first()
+                            deal_id = deal.id
+                            date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                            type = 'Доставка'
+                            # if ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1, operation_type='write_off').count() != 0:
+                            ip_income = ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1,
+                                                                               operation_type='write_on').first()
+                            if ip_income.currency:
+                                if ip_income.currency.short_name in ['USD', 'USDT']:
+                                    income = deal.national_currency
+                                    incomes.append(income)
+                                else:
+                                    income = ip_income.amount
+                                    incomes.append(income)
+                            expense = 0
+                            exp_contrs = ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1,
+                                                                                operation_type='write_on')
+                            if expense == 0:
+                                expense = int(0)
+                            expenses.append(expense)
+                            link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                            deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                            if deal.deal_1c:
+                                deal_1c = deal.deal_1c
+                            else:
+                                deal_1c = '-'
+                            data.append(
+                                {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                                 'rate': '', 'deal_1c': deal_1c})
+                total_income = '{0} '.format(
+                    str(Decimal(sum(incomes)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_expense = 0
+                total_rate = 0
+                total_data = {'total_income': total_income, 'total_expense': total_expense, 'total_rate': total_rate}
+        elif bill_type == 'jp':
+            bill_name = 'ЯПОНИЯ USDT'
+            if selected_type == 'aggregates':
+                deals = Deal.objects.filter(date_create__gte=date_from, date_create__lte=date_to,
+                                            closed=True, category__id__in=[2])  # category__id__in=[2],
+                incomes = []
+                expenses = []
+                for deal in deals:
+                    income = 0
+                    if IncomeExpense.objects.filter(deal=deal, expense_account__name='USDT ЯПОНИЯ').count() != 0:
+                        in_ex = IncomeExpense.objects.filter(deal=deal, expense_account__name='USDT ЯПОНИЯ').first()
+                        deal_id = deal.id
+                        date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                        type = 'Агрегаты'
+
+                        if deal.national_currency and deal.national_currency != 0:
+                            income += deal.national_currency
+                            # incomes.append(income)
+                        else:
+                            if in_ex.income_account:
+                                if in_ex.income_account.currency.short_name == 'RUB':
+                                    income += in_ex.income_amount
+                                    # incomes.append(income)
+                            else:
+                                if ContractorDebtOperation.objects.filter(deal=deal).count() != 0:
+                                    debt = ContractorDebtOperation.objects.filter(deal=deal).first()
+                                    if debt.currency.short_name not in ['USD', 'USDT']:
+                                        income += debt.amount
+                        expense = in_ex.expense_amount
+                        expenses.append(expense)
+                        incomes.append(income)
+                        rate = income / expense
+                        rate = '{0} '.format(str(rate.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                        link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                        deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                        if deal.deal_1c:
+                            deal_1c = deal.deal_1c
+                        else:
+                            deal_1c = '-'
+                        data.append(
+                            {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                             'rate': rate, 'deal_1c': deal_1c})
+                try:
+                    total_sum = sum(incomes) / sum(expenses)
+                except:
+                    total_sum = 0
+                total_income = '{0} '.format(
+                    str(Decimal(sum(incomes)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_expense = '{0} '.format(
+                    str(Decimal(sum(expenses)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_rate = '{0} '.format(str(Decimal(total_sum).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_data = {'total_income': total_income, 'total_expense': total_expense, 'total_rate': total_rate}
+            elif selected_type == 'delivery':
+                deals = Deal.objects.filter(Q(contractor_id=1) | Q(debt_operations__contractor_id=1),
+                                            date_create__gte=date_from, date_create__lte=date_to, closed=True, cashflow__name='ДОСТАВКА ЯПОНИЯ').exclude(
+                    cashflow__id__in=[23,24])  # category__id__in=[4]
+                incomes = []
+                expenses = []
+
+                for deal in deals:
+                    income = 0
+                    expense = 0
+                    if IncomeExpense.objects.filter(deal=deal).count() != 0:
+                        in_ex = IncomeExpense.objects.filter(deal=deal).first()
+                        deal_id = deal.id
+                        date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                        type = 'Доставка'
+                        if deal.national_currency:
+                            income = deal.national_currency
+                            incomes.append(income)
+                        else:
+                            if in_ex.income_account:
+                                if in_ex.income_account.currency.short_name == 'RUB':
+                                    income = in_ex.income_amount
+                                    incomes.append(income)
+                                else:
+                                    continue
+                            else:
+                                continue
+                        expense = in_ex.expense_amount
+                        if expense == 0:
+                            expense = int(0)
+                        expenses.append(expense)
+                        link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                        deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                        if deal.deal_1c:
+                            deal_1c = deal.deal_1c
+                        else:
+                            deal_1c = '-'
+                        data.append(
+                            {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                             'rate': '', 'deal_1c': deal_1c})
+                    elif ContractorDebtOperation.objects.filter(deal=deal).count() != 0:
+                        if ContractorDebtOperation.objects.filter(
+                                deal=deal).count() >= 2 and ContractorDebtOperation.objects.filter(deal=deal,
+                                                                                                   contractor__id=1,
+                                                                                                   operation_type='write_on').count() != 0:
+                            in_ex = IncomeExpense.objects.filter(deal=deal).first()
+                            deal_id = deal.id
+                            date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                            type = 'Доставка'
+                            # if ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1, operation_type='write_off').count() != 0:
+                            ip_income = ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1,
+                                                                               operation_type='write_on').first()
+                            if ip_income.currency:
+                                if ip_income.currency.short_name in ['USD', 'USDT']:
+                                    income = deal.national_currency
+                                    incomes.append(income)
+                                else:
+                                    income = ip_income.amount
+                                    incomes.append(income)
+                            expense = 0
+                            exp_contrs = ContractorDebtOperation.objects.filter(deal=deal, contractor__id=1,
+                                                                                operation_type='write_on')
+                            if expense == 0:
+                                expense = int(0)
+                            expenses.append(expense)
+                            link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                            deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                            if deal.deal_1c:
+                                deal_1c = deal.deal_1c
+                            else:
+                                deal_1c = '-'
+                            data.append(
+                                {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                                 'rate': '', 'deal_1c': deal_1c})
+                total_income = '{0} '.format(
+                    str(Decimal(sum(incomes)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_expense = 0
+                total_rate = 0
+                total_data = {'total_income': total_income, 'total_expense': total_expense, 'total_rate': total_rate}
+        elif bill_type == 'ch':
+            bill_name = 'КИТАЙ USDT'
+            if selected_type == 'aggregates':
+                deals = Deal.objects.filter(date_create__gte=date_from, date_create__lte=date_to,
+                                            closed=True, category__id__in=[2])  # category__id__in=[2],
+                incomes = []
+                expenses = []
+                for deal in deals:
+                    income = 0
+                    if IncomeExpense.objects.filter(deal=deal, expense_account__name='USDT КИТАЙ').count() != 0:
+                        in_ex = IncomeExpense.objects.filter(deal=deal, expense_account__name='USDT КИТАЙ').first()
+                        deal_id = deal.id
+                        date_str = deal.date_create.strftime('%Y-%m-%d %H:%M')
+                        type = 'Агрегаты'
+
+                        if deal.national_currency and deal.national_currency != 0:
+                            income += deal.national_currency
+                            # incomes.append(income)
+                        else:
+                            if in_ex.income_account:
+                                if in_ex.income_account.currency.short_name == 'RUB':
+                                    income += in_ex.income_amount
+                                    # incomes.append(income)
+                            else:
+                                if ContractorDebtOperation.objects.filter(deal=deal).count() != 0:
+                                    debt = ContractorDebtOperation.objects.filter(deal=deal).first()
+                                    if debt.currency.short_name not in ['USD', 'USDT']:
+                                        income += debt.amount
+                        expense = in_ex.expense_amount
+                        expenses.append(expense)
+                        incomes.append(income)
+                        rate = income / expense
+                        rate = '{0} '.format(str(rate.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                        link_url = settings.SITE_URL + 'admin/operation/deal/' + str(deal_id) + '/change/'
+                        deal_link = mark_safe(f'<a href="{link_url}">{deal_id}</a>')
+                        if deal.deal_1c:
+                            deal_1c = deal.deal_1c
+                        else:
+                            deal_1c = '-'
+                        data.append(
+                            {'id': deal_link, 'date': date_str, 'type': type, 'income': income, 'expense': expense,
+                             'rate': rate, 'deal_1c': deal_1c})
+                try:
+                    total_sum = sum(incomes) / sum(expenses)
+                except:
+                    total_sum = 0
+                total_income = '{0} '.format(
+                    str(Decimal(sum(incomes)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_expense = '{0} '.format(
+                    str(Decimal(sum(expenses)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_rate = '{0} '.format(str(Decimal(total_sum).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)))
+                total_data = {'total_income': total_income, 'total_expense': total_expense, 'total_rate': total_rate}
+            elif selected_type == 'delivery':
+                deals = Deal.objects.filter(Q(contractor_id=1) | Q(debt_operations__contractor_id=1),
+                                            date_create__gte=date_from, date_create__lte=date_to, closed=True, cashflow__name='ДОСТАВКА КИТАЙ').exclude(
+                    cashflow__id__in=[23,24])  # category__id__in=[4]
                 incomes = []
                 expenses = []
 

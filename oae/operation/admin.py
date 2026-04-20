@@ -270,6 +270,30 @@ class DealAdminForm(forms.ModelForm):
             raise ValidationError({'closed': 'Нельзя закрыть сделку без заполнения поля "Заказ 1с".'})
 
         return cleaned_data
+
+class ContractorDebtFilter(SimpleListFilter):
+    title = 'Контрагент'
+    parameter_name = 'contractor'
+
+    def lookups(self, request, model_admin):
+        contractors = Contractor.objects.all()
+        list_contractors = [(c.id, c.name) for c in contractors]
+        list_contractors.append((0, '-'))
+        return list_contractors#[(c.id, c.name) for c in contractors]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            if self.value() == '0':
+                return queryset.filter(
+                    contractor__isnull=True,
+                    debt_operations__isnull=True
+                ).distinct()
+            else:
+                return queryset.filter(
+                    Q(contractor_id=self.value()) |
+                    Q(debt_operations__contractor_id=self.value())
+                ).distinct()
+        return queryset
     
 reversion.register(Deal, follow=['deal_data']) 
 @admin.register(Deal)
@@ -283,7 +307,7 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
     list_display_links = ('id', 'income_account_1', 'income_amount_1', 'expense_account_1', 'expense_amount_1', 'revenue', 'percent', 'rate_old', 'rate_new', 'contractor', 'comment',  'category', 'cashflow', )
 
 
-    list_filter = ('category',  'cashflow', 'contractor', 'closed', ('deal_data__income_account', RelatedOnlyFieldListFilter), ('deal_data__expense_account', RelatedOnlyFieldListFilter), ManagerFilters, ("date_create", RangeDateTimeFilter), CreatedFilters, NationalCurrencyFilter)
+    list_filter = ('category',  'cashflow', ContractorDebtFilter, 'closed', ('deal_data__income_account', RelatedOnlyFieldListFilter), ('deal_data__expense_account', RelatedOnlyFieldListFilter), ManagerFilters, ("date_create", RangeDateTimeFilter), CreatedFilters, NationalCurrencyFilter)
     ordering = ['-date_create']
     search_fields = ['id', 'comment']
     change_list_template = "bills.html"
@@ -472,11 +496,18 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
 
     def get_list_display(self, request):
         if request.user.is_superuser and request.user.groups.filter(name='restricted').exists():
-            if request.user.username == 'Nikita':
-                return ('id', 'formatted_date_create', 'income_account_1', 'income_amount_1', 'expense_account_1', 'expense_amount_1', 'category', 'cashflow', 'contractor', 'comment', 'national_currency_custom', 'created_by')
-            else:
-                return ('id', 'formatted_date_create', 'income_account_1', 'income_amount_1', 'expense_account_1', 'expense_amount_1', 'category', 'cashflow', 'contractor', 'comment', 'national_currency_custom')
-        return super().get_list_display(request)
+            #if request.user.username == 'Nikita':
+            #return ('id', 'formatted_date_create', 'income_account_1', 'income_amount_1', 'expense_account_1', 'expense_amount_1', 'category', 'cashflow', 'contractor', 'comment', 'national_currency_custom', 'created_by')
+            #else:
+            fields = list(super().get_list_display(request))
+            exclude_fields = ['revenue', 'percent', 'rate_old', 'rate_new']
+
+            return tuple(f for f in fields if f not in exclude_fields)
+            #return ('id', 'formatted_date_create', 'income_account_1', 'income_amount_1', 'expense_account_1', 'expense_amount_1', 'category', 'cashflow', 'contractor', 'comment', 'national_currency_custom')
+        elif request.user.is_superuser and not request.user.groups.filter(name='restricted').exists():
+            return super().get_list_display(request)
+        else:
+            return ('id',)
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -1218,6 +1249,28 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
 
         return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
+    def get_sum_obligation_nat(self):
+        latest_history = ContractorHistory.objects.filter(
+            contractor=OuterRef('pk')
+        ).order_by('-date_create')
+
+        contractors = Contractor.objects.annotate(
+            last_duty=Subquery(
+                latest_history.values('duty')[:1],
+                output_field=DecimalField()
+            )
+        )
+
+        total = contractors.aggregate(
+            total=Coalesce(
+                Sum('last_duty',filter=Q(last_duty__gt=0)),
+                Decimal('0'),
+                output_field=DecimalField()
+            )
+        )['total']
+
+        return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
     def get_sum_usdt(self):
         total = Bill.objects.filter(
             currency__short_name='USDT'
@@ -1226,8 +1279,20 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
         )['total_remainder'] or 0
         return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
+    def get_sum_nat(self):
+        total = Bill.objects.filter(
+            currency__short_name='RUB'
+        ).aggregate(
+            total_remainder=Sum('remainder')
+        )['total_remainder'] or 0
+        return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
     def get_free_usdt(self):
         total = self.get_sum_usdt() - self.get_sum_obligation()
+        return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
+    def get_free_nat(self):
+        total = self.get_sum_nat() - self.get_sum_obligation_nat()
         return total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
     def get_bills_amount_dif(self):
@@ -1351,19 +1416,22 @@ class DealAdmin(CompareVersionAdmin, ModelAdmin):
             'bills_amount_dif': self.get_bills_amount_dif(),
             'sum_obligation': self.get_sum_obligation(),
             'sum_usdt': self.get_sum_usdt(),
+            'sum_obligation_nat': self.get_sum_obligation_nat(),
+            'sum_nat': self.get_sum_nat(),
             'free_usdt': self.get_free_usdt(),
+            'free_nat': self.get_free_nat(),
             'dutys_all': self.get_all_dutys(),
             'dutys': self.get_dutys(),
         }
         if request.user.is_superuser and request.user.groups.filter(name='restricted').exists():
-            if request.user.id != 3:
-                my_context['blocked'] = True
-                my_context['is_admin'] = False
-                my_context['courses'] = self.get_courses(True)
-            else:
-                my_context['blocked'] = False
-                my_context['is_admin'] = False
-                my_context['courses'] = self.get_courses(True)
+            #if request.user.id != 3:
+            my_context['blocked'] = True
+            my_context['is_admin'] = False
+            my_context['courses'] = self.get_courses(True)
+            #else:
+            #my_context['blocked'] = False
+            #my_context['is_admin'] = False
+            #my_context['courses'] = self.get_courses(True)
         elif request.user.is_superuser:
             if request.user.id == 1:
                 my_context['blocked'] = False

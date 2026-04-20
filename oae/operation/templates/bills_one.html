@@ -1245,11 +1245,12 @@
 
       var ieGroup = document.getElementById('deal_data-group');
       var debtGroup = document.getElementById('debt_operations-group');
+      var rcRow = null;
 
       if (ieGroup) {
         var rcInput = ieGroup.querySelector('input[name$="-rate_conversion"]');
         if (rcInput) {
-          var rcRow = document.createElement('div');
+          rcRow = document.createElement('div');
           rcRow.className = 'df-rate-conversion-row';
           var rcLabel = document.createElement('label');
           rcLabel.textContent = 'Курс конвертации';
@@ -1583,6 +1584,7 @@
             hdr.classList.remove('df-contractor-hidden');
             mainFieldset.classList.remove('df-contractor-mode');
             infoBar.classList.add('df-tab-hidden');
+            if (rcRow) rcRow.classList.remove('df-contractor-hidden');
             if (ieGroup) ieGroup.classList.remove('df-hidden');
             if (debtGroup) debtGroup.classList.add('df-hidden');
           } else {
@@ -1592,6 +1594,7 @@
             hdr.classList.add('df-contractor-hidden');
             var btm3 = aligned.querySelector('.df-bottom-3');
             if (btm3) btm3.classList.add('df-contractor-hidden');
+            if (rcRow) rcRow.classList.add('df-contractor-hidden');
             mainFieldset.classList.add('df-contractor-mode');
             infoBar.classList.remove('df-tab-hidden');
             if (dcSel) loadContractorBalanceById(dcSel.value);
@@ -1654,8 +1657,89 @@
           }
         });
       }
-      if (debtGroup && debtGroup.querySelector('.errorlist')) {
-        if (tabsDiv) {
+      function findErrorElements(root) {
+        if (!root) return [];
+        var found = [];
+        var seenEl = new Set();
+        function push(el) {
+          if (!el || seenEl.has(el)) return;
+          seenEl.add(el);
+          found.push(el);
+        }
+        var selectors = [
+          '.errorlist li', 'ul.errors li', '.errors li',
+          '[class*="errorlist"] li', '[class*="error-list"] li',
+          '.invalid-feedback', '.field-error', '.form-error',
+          '[class*="text-red"]:not(a):not(button)',
+          '[role="alert"]'
+        ];
+        selectors.forEach(function(sel) {
+          try {
+            root.querySelectorAll(sel).forEach(function(el) {
+              var txt = (el.textContent || '').trim();
+              if (!txt || txt.length > 400) return;
+              if (txt === 'Please correct the errors below.' || /^\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430/.test(txt)) return;
+              if (el.closest('.df-error-summary')) return;
+              push(el);
+            });
+          } catch(_) {}
+        });
+        return found;
+      }
+      function deriveTabFor(el) {
+        if (!el) return 'main';
+        if (debtGroup && debtGroup.contains(el)) return 'contractor';
+        return 'main';
+      }
+
+      var allErrEls = findErrorElements(document.getElementById('content-main') || document.body);
+      var hasErrornote = !!document.querySelector('.errornote, [class*="errornote"]');
+      if (allErrEls.length || hasErrornote) {
+        var msgs = [];
+        var seen = {};
+        var hasContractorErr = false;
+        allErrEls.forEach(function(el) {
+          var txt = (el.textContent || '').trim();
+          if (!txt || seen[txt]) return;
+          seen[txt] = true;
+          var fieldRow = el.closest('.form-row, tr, .field-line, td');
+          var fieldLbl = '';
+          if (fieldRow) {
+            var lbl = fieldRow.querySelector('label');
+            if (lbl) fieldLbl = (lbl.textContent || '').replace(/[:*]/g, '').trim();
+          }
+          msgs.push({ text: txt, field: fieldLbl, tab: deriveTabFor(el) });
+          if (deriveTabFor(el) === 'contractor') hasContractorErr = true;
+          if (fieldRow) {
+            fieldRow.style.outline = '2px solid #FCA5A5';
+            fieldRow.style.outlineOffset = '2px';
+            fieldRow.style.borderRadius = '8px';
+          }
+        });
+
+        var existingNote = document.querySelector('.df-error-summary');
+        if (existingNote) existingNote.remove();
+        var summary = document.createElement('div');
+        summary.className = 'df-error-summary';
+        summary.style.cssText = 'background:#FEF2F2;border:1px solid #FCA5A5;border-radius:12px;padding:12px 16px;margin-bottom:12px;color:#991B1B;font-family:Inter,sans-serif;';
+        var head = '<div style="font-weight:600;margin-bottom:6px;font-size:14px;">\u041E\u0448\u0438\u0431\u043A\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F</div>';
+        var body;
+        if (msgs.length) {
+          body = '<ul style="margin:0;padding-left:18px;font-size:13px;">' + msgs.map(function(m) {
+            var prefix = '';
+            if (m.field) prefix = '<strong>' + m.field.replace(/</g, '&lt;') + ':</strong> ';
+            var tabTag = m.tab === 'contractor' ? ' <span style="opacity:0.7;">[\u0432\u043A\u043B. \u041A\u043E\u043D\u0442\u0440\u0430\u0433\u0435\u043D\u0442]</span>' : '';
+            return '<li>' + prefix + m.text.replace(/</g, '&lt;') + tabTag + '</li>';
+          }).join('') + '</ul>';
+        } else {
+          body = '<div style="font-size:13px;">\u0424\u043E\u0440\u043C\u0430 \u043D\u0435 \u043F\u0440\u043E\u0448\u043B\u0430 \u0432\u0430\u043B\u0438\u0434\u0430\u0446\u0438\u044E. \u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u043A\u043E\u043D\u0441\u043E\u043B\u044C (F12) \u0434\u043B\u044F \u0434\u0435\u0442\u0430\u043B\u0435\u0439.</div>';
+          console.warn('[df] errornote shown but no error elements matched selectors. Scan deal form DOM for error classes.');
+        }
+        summary.innerHTML = head + body;
+        var contentMain = document.getElementById('content-main') || document.getElementById('content');
+        if (contentMain) contentMain.insertBefore(summary, contentMain.firstChild);
+
+        if (hasContractorErr && tabsDiv) {
           tabsDiv.querySelectorAll('.df-tab').forEach(function(t) {
             t.classList.toggle('df-tab--active', t.dataset.tab === 'contractor');
           });
@@ -1665,6 +1749,7 @@
           hdr.classList.add('df-contractor-hidden');
           var btm3 = aligned.querySelector('.df-bottom-3');
           if (btm3) btm3.classList.add('df-contractor-hidden');
+          if (rcRow) rcRow.classList.add('df-contractor-hidden');
           mainFieldset.classList.add('df-contractor-mode');
           infoBar.classList.remove('df-tab-hidden');
           if (dcSel) loadContractorBalanceById(dcSel.value);

@@ -332,6 +332,7 @@ class IncomeExpense(models.Model):
     rate_calculated = models.BooleanField('Рассчитан приход', default=False)
     transaction_id = models.CharField('Hash', max_length=2056, null=True, blank=True)
     date_upload = models.DateField(auto_now_add=True, blank=True, null=True)
+    rate_conversion = models.DecimalField('Курс конвертации',max_digits=10, decimal_places=8,default=0.00, blank=True, null=True)
 
 
 

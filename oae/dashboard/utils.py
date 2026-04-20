@@ -1,10 +1,10 @@
 from datetime import timedelta
 from django.utils import timezone
-from operation.models import IncomeExpense, Deal, DealRepayment
+from operation.models import IncomeExpense, Deal, DealRepayment,ContractorDebtOperation
 from django.utils.timezone import now
 import calendar
 from collections import defaultdict
-from django.db.models import Count, Sum, F, Sum, Case, When, DecimalField, ExpressionWrapper, Q, Value , Subquery, OuterRef, Min
+from django.db.models import Count, Sum, F, Sum, Case, When, DecimalField, ExpressionWrapper, Q, Value , Subquery, OuterRef, Min, Exists
 from django.db.models.functions import ExtractWeekDay, TruncDay, TruncMonth, ExtractMonth, Coalesce
 import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -207,11 +207,11 @@ def get_revenue_months_by_contractor_values_only():
         ))
         .order_by('month')
     )
-    contractor_qs = (
+    """contractor_qs = (
         IncomeExpense.objects
         .filter(base_filter & (cond1 | cond2))
         .annotate(month=TruncMonth('date_create'))
-        .values('month', 'deal__contractor__name')
+        .values('month', 'deal__contractor__name','deal__id')
         .annotate(c_net=Sum(
             Case(
                 When(cond1, then=net_value),
@@ -221,19 +221,118 @@ def get_revenue_months_by_contractor_values_only():
             )
         ))
         .order_by('month', 'deal__contractor__name')
+    )"""
+    debt_writeoff_exists = ContractorDebtOperation.objects.filter(
+        deal_id=OuterRef('deal_id'),
+        operation_type='write_off',
+        amount=OuterRef('expense_amount'),
+        currency_id=OuterRef('expense_account__currency_id')
     )
-    contractors = sorted({
-        rec['deal__contractor__name'] or 'Без контрагента'
-        for rec in contractor_qs
-    })
-    cont_map = {}
+
+    # --- Query ---
+    contractor_qs = (
+        IncomeExpense.objects
+        .filter(base_filter)
+        .annotate(
+            has_writeoff=Exists(debt_writeoff_exists),
+            month=TruncMonth('date_create')
+        )
+        .filter(cond1 | cond2)
+        .values('month', 'deal__contractor__name', 'deal__id')
+        .annotate(
+            c_net=Sum(
+                Case(
+                    # обычный случай
+                    When(cond1, then=net_value),
+
+                    # cond2 ТОЛЬКО если нет write_off
+                    When(cond2 & Q(has_writeoff=False), then=net_value_1),
+
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
+        )
+        .order_by('month', 'deal__contractor__name')
+    )
+    deals_with_profit = (
+        Deal.objects
+        .filter(closed=True)
+        .annotate(month=TruncMonth('date_create'))
+        .annotate(
+            ie_usdt_expense_count=Count('deal_data', filter=Q(
+                deal_data__income_account__isnull=True,
+                deal_data__expense_account__currency__short_name='USDT'
+            ), distinct=True),
+
+            debt_writeoff_rub_count=Count('debt_operations', filter=Q(
+                debt_operations__operation_type='write_off',
+                debt_operations__currency__short_name='RUB'
+            ), distinct=True),
+
+            ie_expense_usd=Coalesce(Sum(
+                ExpressionWrapper(F('deal_data__expense_amount') * F('deal_data__expense_rate'),
+                                  output_field=DecimalField()),
+                filter=Q(deal_data__income_account__isnull=True,
+                         deal_data__expense_account__currency__short_name='USDT')
+            ), Value(0, output_field=DecimalField())),
+
+            debt_writeoff_rub_sum=Coalesce(Sum('debt_operations__amount', filter=Q(
+                debt_operations__operation_type='write_off',
+                debt_operations__currency__short_name='RUB'
+            )), Value(0, output_field=DecimalField())),
+
+            debt_writeoff_non_usd_sum=Coalesce(Sum('debt_operations__amount', filter=Q(
+                debt_operations__operation_type='write_off'
+            ) & ~Q(debt_operations__currency__short_name__in=['USD', 'USDT'])),
+                                               Value(0, output_field=DecimalField())),
+
+            usdt_writeon_sum=Coalesce(Sum(
+                ExpressionWrapper(F('debt_operations__amount') * F('rate_contractors'),
+                                  output_field=DecimalField()),
+                filter=Q(debt_operations__operation_type='write_on', debt_operations__currency__short_name='USDT')
+            ), Value(0, output_field=DecimalField())),
+        )
+        .annotate(
+            c_net=Case(
+                When(ie_usdt_expense_count=1, debt_writeoff_rub_count=1,
+                     then=F('debt_writeoff_rub_sum') - F('ie_expense_usd')),
+                When(ie_usdt_expense_count=0, debt_writeoff_non_usd_sum__gt=0, usdt_writeon_sum__gt=0,
+                     then=F('debt_writeoff_non_usd_sum') - F('usdt_writeon_sum')),
+                default=Value(0, output_field=DecimalField()),
+                output_field=DecimalField()
+            )
+        )
+        .values('month', 'debt_operations__contractor__name', 'c_net')  # Получаем плоский список
+    )
+    combined_map = defaultdict(dict)
+
+    # Добавляем данные из contractor_qs
     for rec in contractor_qs:
-        month_date = rec['month'].date().replace(day=1)
+        print(rec)
+        month = rec['month'].date().replace(day=1)
         name = rec['deal__contractor__name'] or 'Без контрагента'
         value = rec['c_net'].quantize(Decimal("0.001"), ROUND_HALF_UP)
-        cont_map.setdefault(month_date, {})[name] = value
+        combined_map[month][name] = value
 
-    return cont_map, contractors
+    # Добавляем данные из deals_with_profit, суммируем если уже есть
+    for rec in deals_with_profit:
+        #print(rec)
+        month = rec['month'].date().replace(day=1)  # Приводим день к первому дню месяца
+        name = rec.get('debt_operations__contractor__name') or 'Без контрагента'
+        value = Decimal(rec['c_net']).quantize(Decimal("0.001"), ROUND_HALF_UP)
+        if name in combined_map[month]:
+            combined_map[month][name] += value
+        else:
+            combined_map[month][name] = value
+
+    contractors = sorted({
+        name or 'Без контрагента'
+        for month_data in combined_map.values()
+        for name in month_data.keys()
+    })
+
+    return combined_map, contractors
 
 
 
@@ -249,7 +348,71 @@ def get_dds_table():
     # собираем месяцы за прошлый и текущий год
     month_list = []
     extra_profit_months = {}
+    ie_subquery = (
+        IncomeExpense.objects
+        .filter(
+            deal_id=OuterRef('pk'),
+            income_account__isnull=True,
+            expense_account__currency__short_name='USDT'
+        )
+        .annotate(
+            has_writeoff=Exists(
+                ContractorDebtOperation.objects.filter(
+                    deal_id=OuterRef('deal_id'),
+                    operation_type='write_off',
+                    amount=OuterRef('expense_amount'),
+                    currency_id=OuterRef('expense_account__currency_id')
+                )
+            )
+        )
+        .filter(has_writeoff=False)
+        .annotate(
+            val=ExpressionWrapper(
+                F('expense_amount') * F('expense_rate'),
+                output_field=DecimalField()
+            )
+        )
+        .values('deal_id')
+        .annotate(total=Sum('val'))
+        .values('total')[:1]
+    )
     deals_with_extra = Deal.objects.filter(closed=True).annotate(
+        ie_usdt_expense_count=Count('deal_data', filter=Q(
+            deal_data__income_account__isnull=True,
+            deal_data__expense_account__currency__short_name='USDT'
+        ), distinct=True),
+        debt_writeoff_rub_count=Count('debt_operations', filter=Q(
+            debt_operations__operation_type='write_off',
+            debt_operations__currency__short_name='RUB'
+        ), distinct=True),
+        ie_expense_usd=Coalesce(
+            Subquery(ie_subquery),
+            Value(0, output_field=DecimalField())
+        ),
+        debt_writeoff_rub_sum=Coalesce(Sum('debt_operations__amount', filter=Q(
+            debt_operations__operation_type='write_off',
+            debt_operations__currency__short_name='RUB'
+        )), Value(0, output_field=DecimalField())),
+        debt_writeoff_non_usd_sum=Coalesce(Sum('debt_operations__amount', filter=Q(
+            debt_operations__operation_type='write_off'
+        ) & ~Q(debt_operations__currency__short_name__in=['USD', 'USDT'])),
+                                           Value(0, output_field=DecimalField())),
+        usdt_writeon_sum=Coalesce(Sum(
+            ExpressionWrapper(F('debt_operations__amount') * F('rate_contractors'),
+                              output_field=DecimalField()),
+            filter=Q(debt_operations__operation_type='write_on', debt_operations__currency__short_name='USDT')
+        ), Value(0, output_field=DecimalField())),
+    ).annotate(
+        deal_profit=Case(
+            When(ie_usdt_expense_count=1, debt_writeoff_rub_count=1,
+                 then=F('debt_writeoff_rub_sum') - F('ie_expense_usd')),
+            When(ie_usdt_expense_count=0, debt_writeoff_non_usd_sum__gt=0, usdt_writeon_sum__gt=0,
+                 then=F('debt_writeoff_non_usd_sum') - F('usdt_writeon_sum')),
+            default=Value(0, output_field=DecimalField()),
+            output_field=DecimalField()
+        )
+    ).values('date_create__year', 'date_create__month', 'deal_profit')
+    """deals_with_extra = Deal.objects.filter(closed=True).annotate(
         ie_usdt_expense_count=Count('deal_data', filter=Q(
             deal_data__income_account__isnull=True,
             deal_data__expense_account__currency__short_name='USDT'
@@ -286,7 +449,7 @@ def get_dds_table():
             default=Value(0, output_field=DecimalField()),
             output_field=DecimalField()
         )
-    ).values('date_create__year', 'date_create__month', 'deal_profit')
+    ).values('date_create__year', 'date_create__month', 'deal_profit')"""
 
     for d in deals_with_extra:
         key = (d['date_create__year'], d['date_create__month'])
@@ -382,16 +545,21 @@ def get_dds_table():
             cashflow__status=True,
             cashflow__type_cf='income'
         )
+        print(month)
         for deal in deals:
+            print(deal.id)
+            print('income ', income)
             in_exes = IncomeExpense.objects.filter(deal=deal)
             for in_ex in in_exes:
-                if in_ex.income_account:
-                    if in_ex.income_account.currency.short_name in ['USD', 'USDT']:
-                        income += in_ex.income_amount * in_ex.income_rate
-                    else:
-                        income += in_ex.income_amount
+                if in_ex.deal.cashflow:
+                    if in_ex.income_account:
+                        if in_ex.income_account.currency.short_name in ['USD', 'USDT']:
+                            income += in_ex.income_amount * in_ex.income_rate
+                        else:
+                            income += in_ex.income_amount
         extra = extra_profit_months.get((year, month), Decimal("0"))
-        income += Decimal(extra)
+        #income += Decimal(extra)
+        print('extra ', extra)
         total_income.append(income)
         print('total income:', income)
     for year, month in month_list:
@@ -407,30 +575,38 @@ def get_dds_table():
         for deal in deals:
             in_exes = IncomeExpense.objects.filter(deal=deal)
             for in_ex in in_exes:
-                if in_ex.expense_account:
-                    if in_ex.expense_account.currency.short_name in ['USD', 'USDT']:
-                        expense += in_ex.expense_amount * in_ex.expense_rate
-                    else:
-                        expense += in_ex.expense_amount
+                if in_ex.deal.cashflow:
+                    if in_ex.expense_account:
+                        if in_ex.expense_account.currency.short_name in ['USD', 'USDT']:
+                            expense += in_ex.expense_amount * in_ex.expense_rate
+                        else:
+                            expense += in_ex.expense_amount
         total_expense.append(expense)
         print('total expense:', expense)
 
     all_income = get_revenue_for_dds()
-    for i, (year, month) in enumerate(month_list, start=1):
+    all_income_values = all_income[1:]
+
+    # добавляем extra profit
+    """for i, (year, month) in enumerate(month_list):
         extra = extra_profit_months.get((year, month), Decimal("0"))
-        all_income[i] += extra.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+        all_income_values[i] += extra.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)"""
+
+    # рассчитываем остаток сразу правильно
+    total_remainder = ['Остаток']
+    """for i, (year, month) in enumerate(month_list, start=1):
+        extra = extra_profit_months.get((year, month), Decimal("0"))
+        all_income[i] += extra.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)"""
     total_remainder += [
         Decimal(a - b).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
         for a, b in zip(total_income, total_expense)
     ]
 
     for i in range(1, len(all_income)):
-        """total_remainder[i] = (
-                total_remainder[i] + all_income[i]
-        ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)"""
         print(total_remainder[i])
         print(all_income[i])
         total_remainder[i] += all_income[i]
+
 
 
 
@@ -480,7 +656,7 @@ def get_dds_columns():
     return months_list
 
 
-def get_revenue_for_dds():
+"""def get_revenue_for_dds():
     usd_currencies = ['USD', 'USDT']
     today = datetime.date.today()
     years = [today.year - 1, today.year]
@@ -541,12 +717,25 @@ def get_revenue_for_dds():
         qs = (
             IncomeExpense.objects
             .filter(base_filter, date_create__month=month)
-            .filter(cond1 | cond2)
             .exclude(deal__contractor__id=1)
+            .annotate(
+                has_writeoff=Exists(
+                    ContractorDebtOperation.objects.filter(
+                        deal_id=OuterRef('deal_id'),
+                        operation_type='write_off',
+                        amount=OuterRef('expense_amount'),
+                        currency_id=OuterRef('expense_account__currency_id')
+                    )
+                )
+            )
+            .filter(cond1 | cond2)
             .annotate(
                 net=Case(
                     When(cond1, then=net_value),
-                    When(cond2, then=net_value_1),
+
+                    # 👇 ВАЖНО: добавили исключение
+                    When(cond2 & Q(has_writeoff=False), then=net_value_1),
+
                     default=Value(0),
                     output_field=DecimalField()
                 )
@@ -562,8 +751,229 @@ def get_revenue_for_dds():
         )
         #monthly_net.append(value.quantize(Decimal("0.001") + monthly_ip_income.get(date_str, Decimal("0.000"))).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
 
-    return monthly_net
+    return monthly_net"""
 
+def get_revenue_for_dds():
+    usd_currencies = ['USD', 'USDT']
+
+    today = timezone.localtime(timezone.now())
+    start_year_date = datetime.datetime(today.year - 1, 1, 1)
+    end_date = today
+
+    years = [today.year - 1, today.year]
+
+    month_list = []
+    for year in years:
+        months = (
+            Deal.objects
+            .filter(date_create__year=year)
+            .annotate(m=ExtractMonth('date_create'))
+            .values_list('m', flat=True)
+            .distinct()
+            .order_by('m')
+        )
+        month_list.extend([(year, m) for m in months])
+
+    month_list = sorted(list(dict.fromkeys(month_list)), key=lambda x: (x[0], x[1]))
+
+    monthly_net = ['Доход общий']
+
+    monthly_ip_income = get_ip_income(
+        period='months',
+        start_date=start_year_date,
+        end_date=end_date
+    )
+
+    cond1 = Q(
+        income_account__currency__short_name='RUB',
+        expense_account__currency__short_name__in=usd_currencies
+    )
+
+    cond2 = Q(
+        income_account__isnull=True,
+        expense_account__currency__short_name__in=usd_currencies
+    )
+
+    income_value = F('income_amount')
+
+    expense_value = ExpressionWrapper(
+        F('expense_amount') * F('expense_rate'),
+        output_field=DecimalField()
+    )
+
+    net_value = ExpressionWrapper(
+        income_value - expense_value,
+        output_field=DecimalField()
+    )
+
+    income_value_1 = ExpressionWrapper(
+        F('expense_amount') * F('deal__rate'),
+        output_field=DecimalField()
+    )
+
+    expense_value_1 = ExpressionWrapper(
+        F('expense_amount') * F('expense_rate'),
+        output_field=DecimalField()
+    )
+
+    net_value_1 = ExpressionWrapper(
+        income_value_1 - expense_value_1,
+        output_field=DecimalField()
+    )
+
+    debt_writeoff_exists = ContractorDebtOperation.objects.filter(
+        deal_id=OuterRef('deal_id'),
+        operation_type='write_off',
+        amount=OuterRef('expense_amount'),
+        currency_id=OuterRef('expense_account__currency_id')
+    )
+
+    # -------- deals_with_profit --------
+
+    deals_profit_qs = (
+        Deal.objects
+        .filter(closed=True)
+        .annotate(month=TruncMonth('date_create'))
+        .annotate(
+            ie_usdt_expense_count=Count(
+                'deal_data',
+                filter=Q(
+                    deal_data__income_account__isnull=True,
+                    deal_data__expense_account__currency__short_name='USDT'
+                ),
+                distinct=True
+            ),
+
+            debt_writeoff_rub_count=Count(
+                'debt_operations',
+                filter=Q(
+                    debt_operations__operation_type='write_off',
+                    debt_operations__currency__short_name='RUB'
+                ),
+                distinct=True
+            ),
+
+            ie_expense_usd=Coalesce(
+                Sum(
+                    ExpressionWrapper(
+                        F('deal_data__expense_amount') * F('deal_data__expense_rate'),
+                        output_field=DecimalField()
+                    ),
+                    filter=Q(
+                        deal_data__income_account__isnull=True,
+                        deal_data__expense_account__currency__short_name='USDT'
+                    )
+                ),
+                Value(0),
+                output_field=DecimalField()
+            ),
+
+            debt_writeoff_rub_sum=Coalesce(
+                Sum(
+                    'debt_operations__amount',
+                    filter=Q(
+                        debt_operations__operation_type='write_off',
+                        debt_operations__currency__short_name='RUB'
+                    )
+                ),
+                Value(0),
+                output_field=DecimalField()
+            ),
+
+            debt_writeoff_non_usd_sum=Coalesce(
+                Sum(
+                    'debt_operations__amount',
+                    filter=Q(debt_operations__operation_type='write_off')
+                    & ~Q(debt_operations__currency__short_name__in=['USD', 'USDT'])
+                ),
+                Value(0),
+                output_field=DecimalField()
+            ),
+
+            usdt_writeon_sum=Coalesce(
+                Sum(
+                    ExpressionWrapper(
+                        F('debt_operations__amount') * F('rate_contractors'),
+                        output_field=DecimalField()
+                    ),
+                    filter=Q(
+                        debt_operations__operation_type='write_on',
+                        debt_operations__currency__short_name='USDT'
+                    )
+                ),
+                Value(0),
+                output_field=DecimalField()
+            ),
+        )
+        .annotate(
+            c_net=Case(
+                When(
+                    ie_usdt_expense_count=1,
+                    debt_writeoff_rub_count=1,
+                    then=F('debt_writeoff_rub_sum') - F('ie_expense_usd')
+                ),
+                When(
+                    ie_usdt_expense_count=0,
+                    debt_writeoff_non_usd_sum__gt=0,
+                    usdt_writeon_sum__gt=0,
+                    then=F('debt_writeoff_non_usd_sum') - F('usdt_writeon_sum')
+                ),
+                default=Value(0),
+                output_field=DecimalField()
+            )
+        )
+        .values('month', 'c_net')
+    )
+
+    deals_profit_map = defaultdict(Decimal)
+
+    for rec in deals_profit_qs:
+        key = rec['month'].strftime('%m.%Y')
+        deals_profit_map[key] += rec['c_net'] or Decimal("0")
+
+    # -------- основной цикл --------
+
+    for year, month in month_list:
+
+        base_filter = Q(
+            date_create__year=year,
+            date_create__month=month,
+            deal__closed=True,
+            deal__category__id__in=[2, 4],
+        ) & ~Q(deal__contractor__id=1)
+
+        qs = (
+            IncomeExpense.objects
+            .filter(base_filter)
+            .annotate(
+                has_writeoff=Exists(debt_writeoff_exists)
+            )
+            .filter(cond1 | cond2)
+            .annotate(
+                net=Case(
+                    When(cond1, then=net_value),
+                    When(cond2 & Q(has_writeoff=False), then=net_value_1),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
+            .aggregate(total_net=Sum('net'))
+        )
+
+        value = qs['total_net'] or Decimal(0)
+
+        date_str = f"{month:02d}.{year}"
+        total = (
+            value
+            + monthly_ip_income.get(date_str, Decimal("0"))
+            + deals_profit_map.get(date_str, Decimal("0"))
+        )
+
+        monthly_net.append(
+            total.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+        )
+
+    return monthly_net
 
 
 

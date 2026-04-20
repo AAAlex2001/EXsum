@@ -6,6 +6,66 @@ from django.db import transaction
 from catalog.models import Contractor, Bill
 from operation.models import IncomeExpense, Deal, DealRepayment, ContractorDebtOperation
 
+import requests
+
+
+def parse_course():
+
+    url = 'https://bestchange.app/v2/85822477ebde9c989c66798b3cb482e6/rates/10-277-59'
+    r = requests.get(url)
+    data = r.json()
+    rates = data["rates"]["10-277-59"]
+
+    result = sorted(
+        [{"changer": r["changer"], "rate": float(r["rate"])} for r in rates],
+        key=lambda x: x["rate"]
+    )
+    total_result = Decimal(1/result[1]['rate'])
+    return total_result
+    """# 1️⃣ Делаем запрос к странице
+    url = "https://www.bestchange.ru/tether-trc20-to-renminbi-cash.html"  # замените на нужный URL
+    response = requests.get(url)
+    html = response.text
+
+    # 2️⃣ Создаем объект BeautifulSoup
+    #soup = BeautifulSoup(html, 'html.parser')  # можно 'lxml', если установлен
+    soup = BeautifulSoup(response.text, 'lxml')
+
+    # 3️⃣ Находим таблицу с id='content-table'
+    table = soup.find("table", id="content_table")
+
+    if not table:
+        print("Таблица с id='content_table' не найдена.")
+        return
+
+    # 4️⃣ Находим tbody внутри таблицы
+    tbody = table.find("tbody")
+    if not tbody:
+        print("tbody не найден в таблице.")
+        return
+
+    # 5️⃣ Получаем все строки tbody
+    rows = tbody.find_all("tr")
+    if len(rows) < 2:
+        print("Во tbody меньше двух строк.")
+        return
+
+    # 6️⃣ Берем вторую строку
+    second_row = rows[1]
+
+    # 7️⃣ Получаем все ячейки td второй строки
+    cells = second_row.find_all("td")
+    if len(cells) < 4:
+        print("В строке меньше 4 ячеек.")
+        exit()
+
+    # 8️⃣ Извлекаем курс из четвертой ячейки
+    rate_cell = cells[3]
+    rate_text = rate_cell.contents[0].strip()  # текст до small/a
+
+    print("Курс:", rate_text)
+    return Decimal(rate_text)"""
+
 
 
 
@@ -1203,47 +1263,8 @@ def recalculate_dutys():
     contractors = Contractor.objects.all()
     deals = Deal.objects.filter(closed=True).order_by('date_create')
     for deal in deals:
-        if deal.contractor:
-            contractor = deal.contractor
-            duty = 0
-            duty_usdt = 0
-            duty_cost = 0
-            in_exes = IncomeExpense.objects.filter(deal=deal)
-            for in_ex in in_exes:
-                if in_ex.income_account and not in_ex.expense_account:
-                    if in_ex.income_account.currency.short_name in ['USD', 'USDT']:
-                        duty += in_ex.income_amount * in_ex.income_rate
-                        duty_cost += in_ex.income_amount * in_ex.income_rate
-                    else:
-                        duty += in_ex.income_amount
-                        duty_cost += in_ex.income_amount
-                if in_ex.expense_account and not in_ex.income_account:
-                    if in_ex.expense_account.currency.short_name in ['USD', 'USDT']:
-                        duty -= in_ex.expense_amount * deal.rate
-                        duty_cost -= in_ex.expense_amount * in_ex.expense_rate
-                    else:
-                        duty -= in_ex.expense_amount
-                        duty_cost -= in_ex.expense_amount
-            if deal.duty_deal != 0:
-                duty -= deal.duty_deal
-                duty_cost -= deal.duty_deal
-            #if deal.id == deals.first().id:
-            if ContractorHistory.objects.filter(contractor=contractor).count() == 0:
-                if contractor.duty:
-                    duty += contractor.duty
-                    duty_cost += contractor.duty
-            else:
-                last_hist = ContractorHistory.objects.filter(contractor=contractor).last()
-                duty += last_hist.duty
-                duty_usdt += last_hist.duty_usdt
-                duty_cost += last_hist.duty
-            history_obj = ContractorHistory(contractor=contractor, deal=deal)
-            history_obj.date_create = deal.date_create
-            history_obj.duty = Decimal(duty)
-            history_obj.duty_usdt = Decimal(duty_usdt)
-            history_obj.duty_cost = Decimal(duty_cost)
-            history_obj.save()
-        else:
+        #if deal.contractor:
+        if ContractorDebtOperation.objects.filter(deal=deal).count() != 0:
             debts = ContractorDebtOperation.objects.filter(deal=deal)
             for debt in debts:
                 contractor = debt.contractor
@@ -1301,6 +1322,49 @@ def recalculate_dutys():
                         history_obj.duty = Decimal(duty)
                         history_obj.duty_usdt = Decimal(duty_usdt)
                         history_obj.save()
+        else:
+            if deal.contractor:
+                contractor = deal.contractor
+                duty = 0
+                duty_usdt = 0
+                duty_cost = 0
+                in_exes = IncomeExpense.objects.filter(deal=deal)
+                for in_ex in in_exes:
+                    if in_ex.income_account and not in_ex.expense_account:
+                        if in_ex.income_account.currency.short_name in ['USD', 'USDT']:
+                            duty += in_ex.income_amount * in_ex.income_rate
+                            duty_cost += in_ex.income_amount * in_ex.income_rate
+                        else:
+                            duty += in_ex.income_amount
+                            duty_cost += in_ex.income_amount
+                    if in_ex.expense_account and not in_ex.income_account:
+                        if in_ex.expense_account.currency.short_name in ['USD', 'USDT']:
+                            duty -= in_ex.expense_amount * deal.rate
+                            duty_cost -= in_ex.expense_amount * in_ex.expense_rate
+                        else:
+                            duty -= in_ex.expense_amount
+                            duty_cost -= in_ex.expense_amount
+                if deal.duty_deal != 0:
+                    duty -= deal.duty_deal
+                    duty_cost -= deal.duty_deal
+                #if deal.id == deals.first().id:
+                if ContractorHistory.objects.filter(contractor=contractor).count() == 0:
+                    if contractor.duty:
+                        duty += contractor.duty
+                        duty_cost += contractor.duty
+                else:
+                    last_hist = ContractorHistory.objects.filter(contractor=contractor).last()
+                    duty += last_hist.duty
+                    duty_usdt += last_hist.duty_usdt
+                    duty_cost += last_hist.duty
+                history_obj = ContractorHistory(contractor=contractor, deal=deal)
+                history_obj.date_create = deal.date_create
+                history_obj.duty = Decimal(duty)
+                history_obj.duty_usdt = Decimal(duty_usdt)
+                history_obj.duty_cost = Decimal(duty_cost)
+                history_obj.save()
+
+
 
 
 
@@ -1446,6 +1510,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
         sum=Sum('initial_remainder'),
 
     )['sum']
+    print('bills_sum ', bills_sum)
     bills_total = bills.aggregate(
         sum=Sum(
             ExpressionWrapper(
@@ -1454,7 +1519,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
             )
         )
     )['sum']
-
+    print('bills_total ', bills_total)
     debt_operation_subquery = ContractorDebtOperation.objects.filter(
         deal=OuterRef('deal'),
         currency__short_name=OuterRef('expense_account__currency__short_name'),
@@ -1497,6 +1562,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
             total_sum=Coalesce(Sum('usdt_sum'), Decimal('0'))
         )
     )['total_sum'] or 0
+    print('add_income_sum ', add_income_sum)
     add_expense_sum= (
             Deal.objects
             .annotate(
@@ -1534,6 +1600,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
                 total_sum=Coalesce(Sum('usdt_sum'), Decimal('0'))
             )
         )['total_sum'] or 0
+    print('add_expense_sum ', add_expense_sum)
     expense_sum = IncomeExpense.objects.filter(
         expense_account__currency__short_name=currency,
         deal__date_create__lte=deal_date,
@@ -1550,7 +1617,9 @@ def update_currency_rate_v3_calculate(currency, deal_date):
     ).aggregate(
         sum=Sum('expense_amount'),
     )['sum'] or Decimal('0')
-    expense_sum += add_expense_sum
+    print('expense_sum ', expense_sum)
+    if currency != 'USD':
+        expense_sum += add_expense_sum
     add_income_total = (
         Deal.objects
         .annotate(
@@ -1588,6 +1657,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
             total_sum=Coalesce(Sum('rub_sum'), Decimal('0'))
         )
     )['total_sum'] or 0
+    print('add_income_total ', add_income_total)
     add_expense_total = (
                             Deal.objects
                             .annotate(
@@ -1628,6 +1698,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
                                 total_sum=Coalesce(Sum('course_sum'), Decimal('0'))
                             )
                         )['total_sum'] or 0
+    print('add_expense_total ', add_expense_total)
     expense_total = IncomeExpense.objects.filter(
         expense_account__currency__short_name=currency,
         deal__date_create__lte=deal_date,
@@ -1649,7 +1720,9 @@ def update_currency_rate_v3_calculate(currency, deal_date):
             )
         )
     )['sum'] or Decimal('0')
-    expense_total += add_expense_total
+    print('expense_total ', expense_total)
+    if currency != 'USD':
+        expense_total += add_expense_total
     initial_rate = bills.first().initial_rate
 
 
@@ -1674,7 +1747,9 @@ def update_currency_rate_v3_calculate(currency, deal_date):
             )
         )
     )['sum'] or Decimal('0')
-    deals_sum += add_income_total
+    print('deals_sum ', deals_sum)
+    if currency != 'USD':
+        deals_sum += add_income_total
 
     total_income = IncomeExpense.objects.filter(
         income_account__currency__short_name=currency,
@@ -1689,6 +1764,7 @@ def update_currency_rate_v3_calculate(currency, deal_date):
     ).distinct().aggregate(
         sum=Sum('income_amount')
     )['sum'] or Decimal('0')
+    print('total_income ', total_income)
     total_percent = ContractorDebtOperation.objects.filter(
         deal__deal_data__income_account__currency__short_name=currency,
         deal__date_create__lte=deal_date,
@@ -1696,8 +1772,11 @@ def update_currency_rate_v3_calculate(currency, deal_date):
     ).aggregate(
         sum=Sum('percent')
     )['sum'] or Decimal('0')
-    total_income += add_income_sum
-    total_income += total_percent
+    print('total_percent ', total_percent)
+    if currency != 'USD':
+        total_income += add_income_sum
+    if currency != 'USD':
+        total_income += total_percent
     total_expense = expense_sum
 
     total_rate = (bills_total + deals_sum - expense_total) / (bills_sum + total_income - expense_sum)

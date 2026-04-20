@@ -14,3 +14,5 @@ urlpatterns = router.urls
 urlpatterns += [path('check_autocomplete/', views.CheckAutocomplete.as_view()),]
 urlpatterns += [path('check_national_currency/', views.CheckNationalCurrency.as_view()),]
 urlpatterns += [path('get_cashflow_balance/', views.GetCashflowBalance.as_view()),]
+urlpatterns += [path('get_rate_info/', views.GetRateInfo.as_view()),]
+urlpatterns += [path('get_war_balance/', views.GetWarBalance.as_view()),]
