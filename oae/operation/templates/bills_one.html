@@ -1258,17 +1258,42 @@
           rcField.type = 'number';
           rcField.step = '1e-8';
           rcField.value = rcInput.value || '0.0';
+          var rcErr = document.createElement('div');
+          rcErr.className = 'df-rc-err';
+          rcErr.style.cssText = 'color:#DC2626;font-size:11px;margin-top:4px;display:none;';
           rcRow.appendChild(rcLabel);
           rcRow.appendChild(rcField);
+          rcRow.appendChild(rcErr);
           aligned.appendChild(rcRow);
+          function rcValidate() {
+            var v = (rcField.value || '').trim();
+            if (!v) { rcErr.style.display = 'none'; rcField.style.borderColor = ''; return true; }
+            var num = String(v).replace(',', '.');
+            var m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(num);
+            if (!m) { rcErr.textContent = '\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E'; rcErr.style.display = 'block'; rcField.style.borderColor = '#DC2626'; return false; }
+            var intDigits = m[2].replace(/^0+(?=\d)/, '').length;
+            if (intDigits > 2) {
+              rcErr.textContent = '\u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C 2 \u0446\u0438\u0444\u0440\u044B \u0434\u043E \u0437\u0430\u043F\u044F\u0442\u043E\u0439 (\u0432\u044B \u0432\u0432\u0435\u043B\u0438 ' + intDigits + ')';
+              rcErr.style.display = 'block';
+              rcField.style.borderColor = '#DC2626';
+              return false;
+            }
+            rcErr.style.display = 'none';
+            rcField.style.borderColor = '';
+            return true;
+          }
           rcField.addEventListener('input', function() {
+            rcValidate();
             ieGroup.querySelectorAll('input[name$="-rate_conversion"]').forEach(function(inp) {
               inp.value = rcField.value;
             });
           });
+          rcField.addEventListener('blur', rcValidate);
           rcInput.addEventListener('change', function() {
             rcField.value = rcInput.value;
+            rcValidate();
           });
+          rcValidate();
         }
       }
 
@@ -1657,6 +1682,32 @@
           }
         });
       }
+      var NON_ERROR_TEXTS = {
+        '*': 1, '': 1,
+        '\u0423\u0434\u0430\u043B\u0438\u0442\u044C': 1,
+        '\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C': 1,
+        '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C': 1,
+        'Delete': 1, 'Remove': 1, 'Save': 1, 'Add': 1
+      };
+      function looksLikeError(txt) {
+        if (!txt) return false;
+        if (NON_ERROR_TEXTS[txt]) return false;
+        if (txt.length < 8) return false;
+        if (txt.length > 400) return false;
+        if (txt === 'Please correct the errors below.') return false;
+        if (/^\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430/.test(txt)) return false;
+        if (!/\s/.test(txt)) return false;
+        return true;
+      }
+      function isInsideInteractive(el) {
+        var node = el;
+        while (node && node !== document.body) {
+          if (node.tagName === 'A' || node.tagName === 'BUTTON') return true;
+          if (node.getAttribute && node.getAttribute('role') === 'button') return true;
+          node = node.parentElement;
+        }
+        return false;
+      }
       function findErrorElements(root) {
         if (!root) return [];
         var found = [];
@@ -1669,27 +1720,79 @@
         var selectors = [
           '.errorlist li', 'ul.errors li', '.errors li',
           '[class*="errorlist"] li', '[class*="error-list"] li',
-          '.invalid-feedback', '.field-error', '.form-error',
-          '[class*="text-red"]:not(a):not(button)',
-          '[role="alert"]'
+          '.invalid-feedback', '.field-error', '.form-error'
         ];
         selectors.forEach(function(sel) {
           try {
             root.querySelectorAll(sel).forEach(function(el) {
               var txt = (el.textContent || '').trim();
-              if (!txt || txt.length > 400) return;
-              if (txt === 'Please correct the errors below.' || /^\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430/.test(txt)) return;
+              if (!looksLikeError(txt)) return;
               if (el.closest('.df-error-summary')) return;
+              if (isInsideInteractive(el)) return;
               push(el);
             });
           } catch(_) {}
         });
+        if (found.length === 0) {
+          try {
+            root.querySelectorAll('[class*="text-red"]').forEach(function(el) {
+              if (el.children && el.children.length > 0) return;
+              var txt = (el.textContent || '').trim();
+              if (!looksLikeError(txt)) return;
+              if (el.closest('.df-error-summary')) return;
+              if (isInsideInteractive(el)) return;
+              push(el);
+            });
+          } catch(_) {}
+        }
         return found;
       }
       function deriveTabFor(el) {
         if (!el) return 'main';
         if (debtGroup && debtGroup.contains(el)) return 'contractor';
         return 'main';
+      }
+      function findFieldLabelFor(el) {
+        var node = el;
+        while (node && node !== document.body) {
+          if (node.tagName === 'TD' && node.className) {
+            var m = /field-([a-z0-9_]+)/i.exec(node.className);
+            if (m) {
+              var fname = m[1];
+              if (fname === 'rate_conversion') return '\u041A\u0443\u0440\u0441 \u043A\u043E\u043D\u0432\u0435\u0440\u0442\u0430\u0446\u0438\u0438';
+              var tbl = node.closest('table');
+              if (tbl) {
+                var idx = Array.prototype.indexOf.call(node.parentNode.children, node);
+                var ths = tbl.querySelectorAll('thead th');
+                if (ths[idx]) {
+                  var thTxt = (ths[idx].textContent || '').trim();
+                  if (thTxt) return thTxt;
+                }
+              }
+              return fname;
+            }
+          }
+          if (node.classList && (node.classList.contains('form-row') || node.classList.contains('field-line'))) {
+            var lbl = node.querySelector('label');
+            if (lbl) {
+              var t = (lbl.textContent || '').replace(/[:*]/g, '').trim();
+              if (t) return t;
+            }
+          }
+          node = node.parentElement;
+        }
+        return '';
+      }
+      function outlineTargetFor(el) {
+        var td = el.closest('td[class*="field-"]');
+        if (td) {
+          var m = /field-([a-z0-9_]+)/i.exec(td.className);
+          if (m && m[1] === 'rate_conversion' && rcRow) return rcRow;
+          if (td.offsetParent !== null) return td;
+          var tr = td.closest('tr');
+          if (tr) return tr;
+        }
+        return el.closest('.form-row, .field-line, tr');
       }
 
       var allErrEls = findErrorElements(document.getElementById('content-main') || document.body);
@@ -1702,18 +1805,14 @@
           var txt = (el.textContent || '').trim();
           if (!txt || seen[txt]) return;
           seen[txt] = true;
-          var fieldRow = el.closest('.form-row, tr, .field-line, td');
-          var fieldLbl = '';
-          if (fieldRow) {
-            var lbl = fieldRow.querySelector('label');
-            if (lbl) fieldLbl = (lbl.textContent || '').replace(/[:*]/g, '').trim();
-          }
+          var fieldLbl = findFieldLabelFor(el);
+          var tgt = outlineTargetFor(el);
           msgs.push({ text: txt, field: fieldLbl, tab: deriveTabFor(el) });
           if (deriveTabFor(el) === 'contractor') hasContractorErr = true;
-          if (fieldRow) {
-            fieldRow.style.outline = '2px solid #FCA5A5';
-            fieldRow.style.outlineOffset = '2px';
-            fieldRow.style.borderRadius = '8px';
+          if (tgt) {
+            tgt.style.outline = '2px solid #FCA5A5';
+            tgt.style.outlineOffset = '2px';
+            tgt.style.borderRadius = '8px';
           }
         });
 
