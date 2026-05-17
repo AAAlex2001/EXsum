@@ -426,6 +426,7 @@
     position: relative;
     padding: 16px 0 0;
     overflow: hidden;
+    z-index: 1;
   }
   .pp-carousel {
     display: flex;
@@ -437,6 +438,7 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     isolation: isolate;
+    z-index: 1;
   }
   .pp-carousel::-webkit-scrollbar { display: none; }
   .pp-carousel__card {
@@ -1021,15 +1023,15 @@
         </div>
         <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r3">
           <span class="pp-metrics__card-label">Сумма всех моих обязательств в рублях</span>
-          <span class="pp-metrics__card-value">{{ sum_obligation_rub|default:"—" }}</span>
+          <span class="pp-metrics__card-value">{{ sum_obligation_nat|default:"—" }}</span>
         </div>
         <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r4">
           <span class="pp-metrics__card-label">Общее количество рублей на счетах</span>
-          <span class="pp-metrics__card-value">{{ sum_rub|default:"—" }}</span>
+          <span class="pp-metrics__card-value">{{ sum_nat|default:"—" }}</span>
         </div>
         <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r4">
           <span class="pp-metrics__card-label">Свободные рубли</span>
-          <span class="pp-metrics__card-value">{{ free_rub|default:"—" }}</span>
+          <span class="pp-metrics__card-value">{{ free_nat|default:"—" }}</span>
         </div>
         {% endif %}
       </div>
@@ -1052,16 +1054,18 @@
             <div class="pp-accounts__row" data-bill-name="{{ bill.name }}">
               <a href="{% url 'admin:catalog_bill_change' bill.id %}">
                 <div class="pp-accounts__name-wrap">
-                  {% if 'Япония' in bill.name or 'япония' in bill.name %}
-                    <span class="pp-accounts__flag">🇯🇵</span>
-                  {% elif 'Китай' in bill.name or 'китай' in bill.name %}
-                    <span class="pp-accounts__flag">🇨🇳</span>
-                  {% elif 'Корея' in bill.name or 'корея' in bill.name or 'КОРЕЯ' in bill.name %}
-                    <span class="pp-accounts__flag">🇰🇷</span>
-                  {% elif bill.currency.short_name == 'USDT' %}
+                  {% if bill.short_name == 'USDT ОАЭ' %}
                     <span class="pp-accounts__flag">🇦🇪</span>
-                  {% elif bill.currency.short_name == 'USD' %}
-                    <span class="pp-accounts__flag">🇺🇸</span>
+                  {% elif bill.short_name == 'ТДЖ ОАЭ' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.short_name == 'ТДЖ ОАЭ 2' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.short_name == 'USDT КОРЕЯ' %}
+                    <span class="pp-accounts__flag">🇰🇷</span>
+                  {% elif bill.short_name == 'USDT ЯПОНИЯ' %}
+                    <span class="pp-accounts__flag">🇯🇵</span>
+                  {% elif bill.short_name == 'USDT КИТАЙ' %}
+                    <span class="pp-accounts__flag">🇨🇳</span>
                   {% else %}
                     <span class="pp-accounts__flag">🇷🇺</span>
                   {% endif %}
@@ -1093,6 +1097,7 @@
     <div class="pp-carousel-fade-left" id="ppFadeLeft"></div>
     <div class="pp-carousel" id="ppCarousel">
       {% for duty in dutys %}
+        <a href="{% url 'contractor_history' duty.id %}" class="pp-carousel__card-link">
       <div class="pp-carousel__card">
         <div class="pp-carousel__card-header">
           <div class="pp-carousel__card-header-row">
@@ -1111,6 +1116,8 @@
           </div>
         </div>
       </div>
+          </a>
+            
       {% empty %}
       <div class="pp-carousel__card">
         <div class="pp-carousel__card-header">
@@ -1121,6 +1128,7 @@
         </div>
         <div class="pp-carousel__card-body"></div>
       </div>
+
       {% endfor %}
     </div>
     <div class="pp-carousel-fade-right" id="ppFadeRight"></div>
@@ -1181,10 +1189,47 @@
       </div>
       <div class="pp-metrics">
         <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r0">
-          <span class="pp-metrics__card-label">Общий долг</span>
+          <span class="pp-metrics__card-label">Общий долг нац</span>
           <span class="pp-metrics__card-value">{{ dutys_all }}</span>
         </div>
-      </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r0">
+          <span class="pp-metrics__card-label">Общий баланс ликвидности по себестоимости</span>
+          <span class="pp-metrics__card-value">{{ bills_amount }}</span>
+        </div>
+
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r1">
+          <span class="pp-metrics__card-label">Общий баланс ликвидности по рынку</span>
+          <span class="pp-metrics__card-value">{{ bills_amount_admin }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r1">
+          <span class="pp-metrics__card-label">Разница</span>
+          <span class="pp-metrics__card-value">{{ bills_amount_dif }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r2">
+          <span class="pp-metrics__card-label">Сумма всех моих обязательств в USDT</span>
+          <span class="pp-metrics__card-value">{{ sum_obligation }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r2">
+          <span class="pp-metrics__card-label">Общее количество USDT на счетах</span>
+          <span class="pp-metrics__card-value">{{ sum_usdt }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r3">
+          <span class="pp-metrics__card-label">Свободные USDT</span>
+          <span class="pp-metrics__card-value">{{ free_usdt }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r3">
+          <span class="pp-metrics__card-label">Сумма всех моих обязательств в рублях</span>
+          <span class="pp-metrics__card-value">{{ sum_obligation_nat|default:"—" }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c0 pp-metrics__card--r4">
+          <span class="pp-metrics__card-label">Общее количество рублей на счетах</span>
+          <span class="pp-metrics__card-value">{{ sum_nat|default:"—" }}</span>
+        </div>
+        <div class="pp-metrics__card pp-metrics__card--c1 pp-metrics__card--r4">
+          <span class="pp-metrics__card-label">Свободные рубли</span>
+          <span class="pp-metrics__card-value">{{ free_nat|default:"—" }}</span>
+        </div>
+          </div>
     </div>
     <div class="pp-stats__right">
       <div class="pp-accounts">
@@ -1200,19 +1245,21 @@
             {% endif %}
             <div class="pp-accounts__row" data-bill-name="{{ bill.name }}">
               <div class="pp-accounts__name-wrap">
-                {% if 'Япония' in bill.name or 'япония' in bill.name %}
-                  <span class="pp-accounts__flag">🇯🇵</span>
-                {% elif 'Китай' in bill.name or 'китай' in bill.name %}
-                  <span class="pp-accounts__flag">🇨🇳</span>
-                {% elif 'Корея' in bill.name or 'корея' in bill.name or 'КОРЕЯ' in bill.name %}
-                  <span class="pp-accounts__flag">🇰🇷</span>
-                {% elif bill.currency.short_name == 'USDT' %}
-                  <span class="pp-accounts__flag">🇦🇪</span>
-                {% elif bill.currency.short_name == 'USD' %}
-                  <span class="pp-accounts__flag">🇺🇸</span>
-                {% else %}
-                  <span class="pp-accounts__flag">🇷🇺</span>
-                {% endif %}
+               {% if bill.short_name == 'USDT ОАЭ' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.short_name == 'ТДЖ ОАЭ' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.short_name == 'ТДЖ ОАЭ 2' %}
+                    <span class="pp-accounts__flag">🇦🇪</span>
+                  {% elif bill.short_name == 'USDT КОРЕЯ' %}
+                    <span class="pp-accounts__flag">🇰🇷</span>
+                  {% elif bill.short_name == 'USDT ЯПОНИЯ' %}
+                    <span class="pp-accounts__flag">🇯🇵</span>
+                  {% elif bill.short_name == 'USDT КИТАЙ' %}
+                    <span class="pp-accounts__flag">🇨🇳</span>
+                  {% else %}
+                    <span class="pp-accounts__flag">🇷🇺</span>
+                  {% endif %}
                 <span class="pp-accounts__name">{{ bill.name }}</span>
               </div>
               <div class="pp-accounts__values">
@@ -1235,6 +1282,7 @@
     <div class="pp-carousel-fade-left" id="ppFadeLeftB"></div>
     <div class="pp-carousel" id="ppCarouselBlocked">
       {% for duty in dutys %}
+        <a href="{% url 'contractor_history' duty.id %}" class="pp-carousel__card-link">
       <div class="pp-carousel__card">
         <div class="pp-carousel__card-header">
           <div class="pp-carousel__card-header-row">
@@ -1243,12 +1291,17 @@
           </div>
         </div>
         <div class="pp-carousel__card-body">
+            <div class="pp-carousel__card-row">
+            <span class="pp-carousel__card-label">USDT</span>
+            <span class="pp-carousel__card-val">{{ duty.duty_usdt|floatformat:1 }} ₮</span>
+          </div>
           <div class="pp-carousel__card-row">
             <span class="pp-carousel__card-label">РУБ</span>
             <span class="pp-carousel__card-val">{{ duty.duty|floatformat:3 }} ₽</span>
           </div>
         </div>
       </div>
+        </a>
       {% empty %}
       <div class="pp-carousel__card">
         <div class="pp-carousel__card-header">

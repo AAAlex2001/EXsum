@@ -171,16 +171,41 @@
     border: none !important;
   }
 
-  .form-row:has(.field-date_create) { order: 1; }
-  .form-row:has(.field-closed)      { order: 2; display: flex; align-items: flex-end; justify-content: flex-end; }
-  .form-row:has(.field-category)    { order: 3; }
-  .form-row:has(.field-contractor)  { order: 4; }
-  .form-row:has(.field-cashflow)    { order: 5; }
-  .form-row:has(.field-comment)     { order: 6; }
-  .form-row:has(.field-rate)        { order: 7; }
-  .form-row:has(.field-by_nikita)   { order: 8; display: none !important; }
+  #content-main fieldset .aligned > .form-row {
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #content-main fieldset .aligned > .form-row:has(.field-closed),
+  #content-main fieldset .aligned > .form-row:has(.field-category),
+  #content-main fieldset .aligned > .form-row:has(.field-contractor),
+  #content-main fieldset .aligned > .form-row:has(.field-cashflow),
+  #content-main fieldset .aligned > .form-row:has(.field-comment),
+  #content-main fieldset .aligned > .form-row:has(.field-rate),
+  #content-main fieldset .aligned > .form-row:has(.field-spare_part),
+  #content-main fieldset .aligned > .form-row:has(.field-rate_contractors),
+  #content-main fieldset .aligned > .form-row:has(.field-duty_deal),
+  #content-main fieldset .aligned > .form-row:has(.field-national_currency),
+  #content-main fieldset .aligned > .form-row:has(.field-deal_1c) {
+    grid-column: auto;
+  }
+  #content-main fieldset .aligned > .form-row:not(.field-date_create):not(:has(.field-date_create)):not(.field-closed):not(:has(.field-closed)):not(.field-category):not(:has(.field-category)):not(.field-contractor):not(:has(.field-contractor)):not(.field-cashflow):not(:has(.field-cashflow)):not(.field-comment):not(:has(.field-comment)):not(.field-rate):not(:has(.field-rate)):not(.field-spare_part):not(:has(.field-spare_part)):not(.field-by_nikita):not(:has(.field-by_nikita)):not(.field-rate_contractors):not(:has(.field-rate_contractors)):not(.field-duty_deal):not(:has(.field-duty_deal)):not(.field-national_currency):not(:has(.field-national_currency)):not(.field-deal_1c):not(:has(.field-deal_1c)) {
+    order: 8;
+    grid-column: 1 / -1;
+  }
+
+  .form-row.field-date_create, .form-row:has(.field-date_create) { order: 1; grid-column: 1 / -1; }
+  .form-row.field-closed, .form-row:has(.field-closed)      { order: 2; display: flex; align-items: flex-end; justify-content: flex-end; }
+  .form-row.field-category, .form-row:has(.field-category)    { order: 3; }
+  .form-row.field-contractor, .form-row:has(.field-contractor)  { order: 4; }
+  .form-row.field-cashflow, .form-row:has(.field-cashflow)    { order: 5; }
+  .form-row.field-comment, .form-row:has(.field-comment)     { order: 6; }
+  .form-row.field-rate, .form-row:has(.field-rate)        { order: 7; }
+  .form-row.field-spare_part, .form-row:has(.field-spare_part) { order: 9; grid-column: auto; }
+  .form-row.field-by_nikita, .form-row:has(.field-by_nikita)   { order: 8; display: none !important; }
   .df-rate-conversion-row {
     order: 8;
+    grid-column: auto;
     padding: 6px 0 !important;
     margin: 0 !important;
     border: none !important;
@@ -214,10 +239,25 @@
   }
   .dark .df-rate-conversion-row label { color: #D1D5DB !important; }
   .dark .df-rate-conversion-row input { background: #1F2937; border-color: #374151; color: #F9FAFB; }
-  .form-row:has(.field-rate_contractors) { order: 9; }
-  .form-row:has(.field-duty_deal)   { order: 10; }
-  .form-row:has(.field-national_currency) { order: 10; }
-  .form-row:has(.field-deal_1c)     { order: 12; }
+  .form-row.field-rate_contractors, .form-row:has(.field-rate_contractors) { order: 9; }
+  .form-row.field-duty_deal, .form-row:has(.field-duty_deal)   { order: 10; }
+  .form-row.field-national_currency, .form-row:has(.field-national_currency) { order: 10; }
+  .form-row.field-deal_1c, .form-row:has(.field-deal_1c)     { order: 12; }
+
+  @media (min-width: 768px) {
+    #content-main fieldset .aligned {
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    }
+    #content-main fieldset .aligned > .form-row:has(.field-date_create) { grid-column: 1 / -1 !important; grid-row: 1; }
+    #content-main fieldset .aligned > .form-row:has(.field-closed) { grid-column: 4 / 7 !important; grid-row: 2; justify-content: flex-start; }
+    #content-main fieldset .aligned > .form-row:has(.field-category) { grid-column: 1 / 4 !important; grid-row: 3; }
+    #content-main fieldset .aligned > .form-row:has(.field-contractor) { grid-column: 4 / 7 !important; grid-row: 3; }
+    #content-main fieldset .aligned > .form-row:has(.field-cashflow) { grid-column: 1 / 4 !important; grid-row: 4; }
+    #content-main fieldset .aligned > .form-row:has(.field-comment) { grid-column: 4 / 7 !important; grid-row: 4; }
+    #content-main fieldset .aligned > .form-row:has(.field-rate) { grid-column: 1 / 3 !important; grid-row: 5; }
+    #content-main fieldset .aligned > .df-rate-conversion-row { grid-column: 3 / 5 !important; grid-row: 5; }
+    #content-main fieldset .aligned > .form-row:has(.field-spare_part) { grid-column: 5 / 7 !important; grid-row: 5; }
+  }
 
   #content-main .field-line label,
   #content-main .field-line .flex label {
@@ -630,33 +670,33 @@
   #deal_data-group td.field-income_amount {
     order: 1 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-income_amount::before { content: 'Сумма прихода' !important; }
+  #deal_data-group td.field-income_amount::before { content: attr(data-df-label) !important; }
   #deal_data-group td.field-income_rate {
     order: 2 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-income_rate::before { content: 'Курс прихода' !important; }
+  #deal_data-group td.field-income_rate::before { content: attr(data-df-label) !important; }
   #deal_data-group td.field-income_account {
     order: 3 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-income_account::before { content: 'Счет прихода' !important; }
+  #deal_data-group td.field-income_account::before { content: attr(data-df-label) !important; }
 
   #deal_data-group td.field-expense_amount {
     order: 4 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-expense_amount::before { content: 'Сумма расхода' !important; }
+  #deal_data-group td.field-expense_amount::before { content: attr(data-df-label) !important; }
   #deal_data-group td.field-expense_rate {
     order: 5 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-expense_rate::before { content: 'Курс расхода' !important; }
+  #deal_data-group td.field-expense_rate::before { content: attr(data-df-label) !important; }
   #deal_data-group td.field-expense_account {
     order: 6 !important; flex: 1 1 calc(33.333% - 14px) !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-expense_account::before { content: 'Счет расхода' !important; }
+  #deal_data-group td.field-expense_account::before { content: attr(data-df-label) !important; }
 
   #deal_data-group td.field-commission {
     order: 7 !important; flex: 0 0 336px !important; min-width: 0 !important;
   }
-  #deal_data-group td.field-commission::before { content: 'Комиссия' !important; }
+  #deal_data-group td.field-commission::before { content: attr(data-df-label) !important; }
 
   #debt_operations-group table {
     display: flex !important;
@@ -718,18 +758,18 @@
   #debt_operations-group td.field-contractor { display: none !important; }
 
   #debt_operations-group td.field-amount { order: 1 !important; }
-  #debt_operations-group td.field-amount::before { content: 'Сумма операции' !important; }
+  #debt_operations-group td.field-amount::before { content: attr(data-df-label) !important; }
   #debt_operations-group td.field-operation_type { order: 2 !important; }
-  #debt_operations-group td.field-operation_type::before { content: 'Тип операции' !important; }
+  #debt_operations-group td.field-operation_type::before { content: attr(data-df-label) !important; }
   #debt_operations-group td.field-percent { order: 3 !important; }
-  #debt_operations-group td.field-percent::before { content: 'Процент' !important; }
+  #debt_operations-group td.field-percent::before { content: attr(data-df-label) !important; }
   #debt_operations-group td.field-currency { order: 4 !important; }
-  #debt_operations-group td.field-currency::before { content: 'Валюта' !important; }
+  #debt_operations-group td.field-currency::before { content: attr(data-df-label) !important; }
   #debt_operations-group td.field-comment {
     order: 5 !important;
     grid-column: 1 / -1 !important;
   }
-  #debt_operations-group td.field-comment::before { content: 'Комментарий' !important; }
+  #debt_operations-group td.field-comment::before { content: attr(data-df-label) !important; }
 
   .df-contractor-hidden { display: none !important; }
   #content-main fieldset.df-contractor-mode {
@@ -932,6 +972,114 @@
   .df-separator-line { flex: 1; height: 0; border-top: 1px solid #D7DBE4; }
   .df-separator-arrow { width: 24px; height: 24px; flex-shrink: 0; }
 
+
+  @media (max-width: 767px) {
+    #content,
+    #content-main,
+    #content-main form,
+    #content-main fieldset,
+    #content-main .inline-group,
+    #content-main .inline-related,
+    #content-main .inline-related fieldset {
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+    }
+    div:has(> #content),
+    #main > .px-4 {
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+    }
+    #content-main fieldset .aligned {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 0 !important;
+    }
+    #content-main fieldset .aligned > .form-row,
+    #content-main fieldset .aligned > .form-row:has(.field-closed),
+    #content-main fieldset .aligned > .form-row:has(.field-category),
+    #content-main fieldset .aligned > .form-row:has(.field-contractor),
+    #content-main fieldset .aligned > .form-row:has(.field-cashflow),
+    #content-main fieldset .aligned > .form-row:has(.field-comment),
+    #content-main fieldset .aligned > .form-row:has(.field-rate),
+    #content-main fieldset .aligned > .form-row:has(.field-rate_contractors),
+    #content-main fieldset .aligned > .form-row:has(.field-duty_deal),
+    #content-main fieldset .aligned > .form-row:has(.field-national_currency),
+    #content-main fieldset .aligned > .form-row:has(.field-deal_1c),
+    .df-rate-conversion-row,
+    .df-bottom-3 {
+      grid-column: 1 / -1 !important;
+      grid-row: auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .form-row:has(.field-closed) {
+      justify-content: flex-start !important;
+    }
+    .df-datetime-row,
+    .df-bottom-3,
+    #content-main fieldset.df-contractor-mode .aligned,
+    .df-contractor-info,
+    .df-debt-contractor-row,
+    .df-actions-bar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+    }
+    .df-datetime-field,
+    #content-main fieldset.df-contractor-mode .form-row:has(.field-contractor),
+    .df-debt-contractor-sel {
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+    }
+    #deal_data-group table,
+    #debt_operations-group table,
+    #deal_data-group tbody,
+    #debt_operations-group tbody {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+    }
+    #deal_data-group .form-row,
+    #debt_operations-group .form-row {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 6px 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    #deal_data-group .form-row > td,
+    #debt_operations-group .form-row > td,
+    #deal_data-group td.field-income_amount,
+    #deal_data-group td.field-income_rate,
+    #deal_data-group td.field-income_account,
+    #deal_data-group td.field-expense_amount,
+    #deal_data-group td.field-expense_rate,
+    #deal_data-group td.field-expense_account,
+    #deal_data-group td.field-commission,
+    #debt_operations-group td.field-comment {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+      box-sizing: border-box !important;
+    }
+    .df-actions-btns,
+    .submit-row {
+      width: 100% !important;
+      flex-wrap: wrap !important;
+    }
+    .submit-row input,
+    .submit-row button,
+    .submit-row a {
+      max-width: 100% !important;
+      white-space: normal !important;
+    }
+  }
+
   .dark .df-bills-label { color: #E5E7EB; }
   .dark .df-bill-card { background: #1F2937; }
   .dark .df-bill-card__name { color: #6B7280; }
@@ -1085,6 +1233,29 @@
 
       var aligned = mainFieldset.querySelector('.aligned') || mainFieldset;
       var tabsDiv = document.getElementById('df-tabs');
+
+      function cleanDfInlineLabel(text) {
+        return (text || '')
+          .replace(/\s+/g, ' ')
+          .replace(/[:*]+$/g, '')
+          .trim();
+      }
+      function applyDfInlineLabels(root) {
+        root = root || document;
+        root.querySelectorAll('#deal_data-group table, #debt_operations-group table').forEach(function(table) {
+          var headers = Array.prototype.map.call(table.querySelectorAll('thead th'), function(th) {
+            return cleanDfInlineLabel(th.textContent);
+          });
+          table.querySelectorAll('tbody:not(.empty-form) tr.form-row').forEach(function(row) {
+            Array.prototype.forEach.call(row.children, function(cell, idx) {
+              if (!/^td$/i.test(cell.tagName)) return;
+              var label = cleanDfInlineLabel(cell.getAttribute('data-label')) || headers[idx] || '';
+              if (label) cell.setAttribute('data-df-label', label);
+            });
+          });
+        });
+      }
+      applyDfInlineLabels(document);
 
       var hdr = document.createElement('div');
       hdr.className = 'df-section-hdr';
@@ -1272,7 +1443,7 @@
             var m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(num);
             if (!m) { rcErr.textContent = '\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E'; rcErr.style.display = 'block'; rcField.style.borderColor = '#DC2626'; return false; }
             var intDigits = m[2].replace(/^0+(?=\d)/, '').length;
-            if (intDigits > 2) {
+            if (intDigits > 3) {
               rcErr.textContent = '\u041C\u0430\u043A\u0441\u0438\u043C\u0443\u043C 2 \u0446\u0438\u0444\u0440\u044B \u0434\u043E \u0437\u0430\u043F\u044F\u0442\u043E\u0439 (\u0432\u044B \u0432\u0432\u0435\u043B\u0438 ' + intDigits + ')';
               rcErr.style.display = 'block';
               rcField.style.borderColor = '#DC2626';
@@ -1573,6 +1744,7 @@
           });
           if (hasNewTbody) {
             rebuildActionBars(g);
+            applyDfInlineLabels(document);
             if (g === debtGroup && dcSel && dcSel.value) {
               g.querySelectorAll('tbody:not(.empty-form) select[name$="-contractor"]').forEach(function(s) {
                 if (!s.value) {
